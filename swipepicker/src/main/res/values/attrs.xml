@@ -1,20 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <attr name="spHintTextAppearance" format="reference" />
-    <attr name="spInputTextAppearance" format="reference" />
-    <attr name="spBackgroundStateList" format="reference" />
+    <attr name="swipePicker" format="reference" />
 
     <declare-styleable name="SwipePicker">
         <attr name="android:minWidth" />
-        <attr name="state">
-            <enum name="disable" value="0" />
-            <enum name="enable" value="1" />
-        </attr>
+        <attr name="android:padding" />
+        <attr name="hintTextAppearance" format="reference" />
+        <attr name="inputTextAppearance" format="reference" />
+        <attr name="android:background" />
+        <attr name="android:state_activated" />
         <attr name="android:hint" />
         <attr name="value" format="float" />
         <attr name="valueFrom" format="float" />
         <attr name="valueTo" format="float" />
-        <attr name="android:stepSize" />
+        <attr name="stepSize" format="float" />
         <attr name="scaleValues" format="reference" />
         <attr name="manualInput" format="boolean" />
         <attr name="android:maxLength" />

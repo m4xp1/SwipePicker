@@ -1,0 +1,33 @@
+<resources>
+
+    <style name="XcoRp.Widget.SwipePicker" parent="ThemeOverlay.AppCompat">
+        <item name="android:minWidth">@dimen/swipePicker_minWidth</item>
+        <item name="android:padding">@dimen/swipePicker_padding</item>
+        <item name="hintTextAppearance">@style/TextAppearance.XcoRp.Widget.SwipePicker.Hint</item>
+        <item name="inputTextAppearance">@style/TextAppearance.XcoRp.Widget.SwipePicker.Input</item>
+        <item name="android:background">@drawable/bg_swipe_picker</item>
+        <item name="android:state_activated">false</item>
+        <item name="android:hint">@null</item>
+        <item name="value">1</item>
+        <item name="valueFrom">0</item>
+        <item name="valueTo">10</item>
+        <item name="stepSize">1</item>
+        <item name="scaleValues">@null</item>
+        <item name="manualInput">true</item>
+        <item name="android:maxLength">@integer/swipePicker_maxLength</item>
+        <item name="inputType">number</item>
+        <item name="onlyRange">false</item>
+    </style>
+
+    <style name="TextAppearance.XcoRp.Widget.SwipePicker" parent="ThemeOverlay.AppCompat">
+        <item name="android:textSize">@dimen/swipePicker_textSize</item>
+    </style>
+
+    <style name="TextAppearance.XcoRp.Widget.SwipePicker.Hint">
+        <item name="android:textColor">@color/hint_swipe_picker</item>
+    </style>
+
+    <style name="TextAppearance.XcoRp.Widget.SwipePicker.Input">
+        <item name="android:textColor">@color/input_swipe_picker</item>
+    </style>
+</resources>

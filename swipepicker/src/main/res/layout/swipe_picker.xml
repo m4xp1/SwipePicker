@@ -4,6 +4,7 @@
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:clipChildren="false"
+    android:minWidth="@dimen/swipePicker_minWidth"
     android:orientation="vertical"
     tools:layout_gravity="center">
 
@@ -11,36 +12,35 @@
         android:id="@android:id/hint"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="fill"
+        android:layout_gravity="center"
         android:contentDescription="@null"
-        android:gravity="center"
         android:includeFontPadding="false"
         android:labelFor="@android:id/input"
         android:maxLines="1"
-        android:padding="2dp"
-        android:textAppearance="?attr/spHintTextAppearance"
-        tools:text="hint" />
+        android:padding="@dimen/swipePicker_padding"
+        android:textAppearance="@style/TextAppearance.XcoRp.Widget.SwipePicker.Hint" />
 
-    <RelativeLayout
+    <FrameLayout
         android:id="@android:id/background"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="fill"
-        android:background="?attr/spBackgroundStateList">
+        android:background="@drawable/bg_swipe_picker">
 
         <EditText
             android:id="@android:id/input"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_centerInParent="true"
+            android:layout_gravity="center"
             android:background="@android:color/transparent"
             android:enabled="false"
             android:hint="@null"
             android:includeFontPadding="false"
-            android:inputType="numberDecimal"
+            android:inputType="number"
+            android:maxLength="@integer/swipePicker_maxLength"
             android:maxLines="1"
-            android:padding="2dp"
-            android:textAppearance="?attr/spInputTextAppearance"
-            tools:text="0.25" />
-    </RelativeLayout>
+            android:padding="@dimen/swipePicker_padding"
+            android:textAppearance="@style/TextAppearance.XcoRp.Widget.SwipePicker.Input"
+            android:textColor="@null" />
+    </FrameLayout>
 </GridLayout>
