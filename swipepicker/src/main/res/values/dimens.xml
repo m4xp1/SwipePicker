@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <dimen name="swipePicker_minWidth">64dp</dimen>
-    <dimen name="swipePicker_padding">4dp</dimen>
+    <dimen name="swipePicker_padding">5dp</dimen>
     <dimen name="swipePicker_strokeWidth">2dp</dimen>
     <dimen name="swipePicker_radiusCorner">4dp</dimen>
     <dimen name="swipePicker_dashGap">2dp</dimen>
