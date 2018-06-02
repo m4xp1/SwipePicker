@@ -26,6 +26,7 @@
             android:enabled="false"
             android:gravity="center"
             android:hint="@null"
+            android:imeOptions="flagNoFullscreen"
             android:includeFontPadding="false"
             android:inputType="number"
             android:maxLines="1"
