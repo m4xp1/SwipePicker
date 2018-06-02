@@ -3,6 +3,7 @@
     <item android:state_activated="true" android:state_selected="true">
         <shape>
             <stroke android:width="@dimen/swipePicker_strokeWidth" android:color="?attr/colorPrimary" />
+            <solid android:color="@android:color/white" />
             <corners android:radius="@dimen/swipePicker_radiusCorner" />
         </shape>
     </item>
@@ -15,6 +16,7 @@
     <item>
         <shape>
             <stroke android:width="@dimen/swipePicker_strokeWidth" android:color="?attr/colorPrimary" android:dashGap="@dimen/swipePicker_dashGap" android:dashWidth="@dimen/swipePicker_dashWidth" />
+            <solid android:color="@android:color/white" />
             <corners android:radius="@dimen/swipePicker_radiusCorner" />
         </shape>
     </item>
