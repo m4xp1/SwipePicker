@@ -1,34 +1,52 @@
 package one.xcorp.widget.swipepicker
 
 import android.content.Context
+import android.content.Context.INPUT_METHOD_SERVICE
+import android.support.annotation.IdRes
 import android.support.v4.view.GestureDetectorCompat
+import android.support.v4.view.ViewCompat
 import android.support.v4.widget.TextViewCompat
 import android.text.InputFilter
 import android.text.InputType
 import android.util.AttributeSet
 import android.view.GestureDetector
 import android.view.View
+import android.view.inputmethod.InputMethodManager
+import android.view.inputmethod.InputMethodManager.RESULT_UNCHANGED_SHOWN
 import android.widget.EditText
 import android.widget.GridLayout
 import android.widget.TextView
+import java.text.NumberFormat
+import java.util.*
+
+private const val ANIMATION_DURATION = 200L
 
 class SwipePicker : GridLayout {
-
-    private val gestureDetector: GestureDetectorCompat
-
-    private val hintTextView: TextView
-    private val backgroundView: View
-    private val inputEditText: EditText
-
-    private val density: Float = resources.displayMetrics.density
 
     var scaleValues: FloatArray? = null
     var minValue: Float = 0f
     var maxValue: Float = 10f
     var stepSize: Float = 1f
     var value: Float = 0f
+        set(value) {
+            field = value
+            invalidateValue()
+        }
     var restrictions: Int = Restrictions.LOWER
     var manualInput: Boolean = true
+
+
+    private val gestureDetector: GestureDetectorCompat
+
+    private val hintTextView by lazy { findViewById<TextView>(android.R.id.hint) }
+    private val backgroundView by lazy { findViewById<View>(android.R.id.background) }
+    private val inputEditText by lazy { findViewById<EditText>(android.R.id.input) }
+
+    private val hintTextSize by textSize(android.R.id.hint)
+    private val inputTextSize by textSize(android.R.id.input)
+    private var activated = false
+
+    private var hintAnimation: LabelAnimation? = null
 
     constructor(context: Context) : this(context, null)
 
@@ -45,11 +63,7 @@ class SwipePicker : GridLayout {
         clipChildren = false
         orientation = VERTICAL
 
-        val view = inflate(context, R.layout.swipe_picker, this)
-        hintTextView = view.findViewById(android.R.id.hint)
-        backgroundView = view.findViewById(android.R.id.background)
-        inputEditText = view.findViewById(android.R.id.input)
-
+        inflate(context, R.layout.swipe_picker, this)
         obtainStyledAttributes(context, attrs, defStyleAttr, defStyleRes)
     }
 
@@ -73,8 +87,9 @@ class SwipePicker : GridLayout {
                         R.style.TextAppearance_XcoRp_Widget_SwipePicker_Input))
         backgroundView.background = typedArray.getDrawable(
                 R.styleable.SwipePicker_android_background); background = null
-        isActivated = typedArray.getBoolean(
+        activated = typedArray.getBoolean(
                 R.styleable.SwipePicker_android_state_activated, false)
+        ViewCompat.setTranslationZ(hintTextView, 1f)
         hintTextView.text = typedArray.getString(R.styleable.SwipePicker_android_hint)
         if (typedArray.hasValue(R.styleable.SwipePicker_scaleValues)) {
             scaleValues = obtainScaleValues(
@@ -132,6 +147,98 @@ class SwipePicker : GridLayout {
         } finally {
             typedArray.recycle()
         }
+    }
+
+    override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
+        super.onLayout(changed, left, top, right, bottom)
+
+        hintTextSize.toString() // Need because view not measured before draw
+        inputTextSize.toString() // Need because view not measured before draw
+
+        if (changed) {
+            isActivated = activated
+            hintAnimation?.end()
+        }
+    }
+
+    override fun isActivated(): Boolean {
+        return activated
+    }
+
+    override fun setActivated(activated: Boolean) {
+        hintAnimation?.cancel()
+        val animation = LabelAnimation(hintTextView).setDuration(ANIMATION_DURATION)
+
+        hintAnimation = if (activated) {
+            animation.to(0f, hintTextSize)
+            animation.addEndListener {
+                inputEditText.visibility = View.VISIBLE
+                super.setActivated(activated)
+            }
+        } else {
+            isSelected = false
+
+            animation.to((backgroundView.top + inputEditText.top).toFloat(), inputTextSize)
+            animation.addStartListener {
+                inputEditText.visibility = View.INVISIBLE
+                super.setActivated(activated)
+            }
+        }
+
+        animation.start()
+        this.activated = activated
+    }
+
+    override fun setSelected(selected: Boolean) {
+        if (isSelected == selected) {
+            return
+        }
+
+        if (!isActivated) {
+            isActivated = true
+        }
+
+        super.setSelected(selected)
+        if (hintAnimation?.isRunning == true) {
+            hintAnimation?.addEndListener { setInputEnabled(isSelected) }
+        } else {
+            setInputEnabled(selected)
+        }
+    }
+
+    private fun invalidateValue() {
+        inputEditText.setText(NumberFormat.getInstance(Locale.US).format(value))
+    }
+
+    private fun setInputEnabled(enabled: Boolean) {
+        if (inputEditText.isEnabled == enabled) {
+            return
+        }
+
+        inputEditText.isEnabled = enabled
+        if (enabled) {
+            inputEditText.requestFocus()
+            inputEditText.selectAll()
+            inputEditText.showKeyboard()
+        } else {
+            inputEditText.hideKeyBoard()
+            inputEditText.setSelection(0)
+            inputEditText.clearFocus()
+        }
+    }
+
+    private fun EditText.showKeyboard() {
+        val imm = context.getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager?
+        imm?.showSoftInput(this, RESULT_UNCHANGED_SHOWN)
+    }
+
+    private fun EditText.hideKeyBoard() {
+        val imm = context.getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager?
+        imm?.hideSoftInputFromWindow(this.windowToken, RESULT_UNCHANGED_SHOWN)
+    }
+
+    private fun textSize(@IdRes resId: Int) = lazy {
+        findViewById<TextView>(resId).textSize / resources.displayMetrics.scaledDensity
     }
 
     private class GestureListener : GestureDetector.SimpleOnGestureListener()
