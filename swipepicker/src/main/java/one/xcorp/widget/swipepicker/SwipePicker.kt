@@ -10,7 +10,9 @@ import android.text.InputFilter
 import android.text.InputType
 import android.util.AttributeSet
 import android.view.GestureDetector
+import android.view.KeyEvent
 import android.view.View
+import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.view.inputmethod.InputMethodManager.RESULT_UNCHANGED_SHOWN
 import android.widget.EditText
@@ -19,21 +21,29 @@ import android.widget.TextView
 import java.text.NumberFormat
 import java.util.*
 
+
 private const val ANIMATION_DURATION = 200L
 
 class SwipePicker : GridLayout {
 
     var scaleValues: FloatArray? = null
-    var minValue: Float = 0f
-    var maxValue: Float = 10f
-    var stepSize: Float = 1f
-    var value: Float = 0f
+    var minValue = 1f
+    var maxValue = 10f
+    var stepSize = 1f
+    var defaultValue = 1f
+    var value = 1f
         set(value) {
             field = value
             invalidateValue()
         }
-    var restrictions: Int = Restrictions.LOWER
-    var manualInput: Boolean = true
+    var restrictions = Restrictions.LOWER
+    var manualInput = true
+        set(enable) {
+            if (!enable) {
+                isSelected = false
+            }
+            field = enable
+        }
 
 
     private val gestureDetector: GestureDetectorCompat
@@ -65,6 +75,8 @@ class SwipePicker : GridLayout {
 
         inflate(context, R.layout.swipe_picker, this)
         obtainStyledAttributes(context, attrs, defStyleAttr, defStyleRes)
+
+        inputEditText.setOnEditorActionListener(::onInputActionDone)
     }
 
     private fun obtainStyledAttributes(
@@ -103,7 +115,8 @@ class SwipePicker : GridLayout {
             throw IllegalArgumentException("The minimum value must be less than the maximum.")
         }
         stepSize = typedArray.getFloat(R.styleable.SwipePicker_stepSize, stepSize)
-        value = typedArray.getFloat(R.styleable.SwipePicker_value, minValue)
+        defaultValue = typedArray.getFloat(R.styleable.SwipePicker_value, minValue)
+        value = defaultValue
         restrictions = typedArray.getInt(R.styleable.SwipePicker_restrictions, restrictions)
         manualInput = typedArray.getBoolean(R.styleable.SwipePicker_manualInput, manualInput)
         inputEditText.inputType = typedArray.getInt(
@@ -177,6 +190,7 @@ class SwipePicker : GridLayout {
             }
         } else {
             isSelected = false
+            value = defaultValue
 
             animation.to((backgroundView.top + inputEditText.top).toFloat(), inputTextSize)
             animation.addStartListener {
@@ -190,7 +204,7 @@ class SwipePicker : GridLayout {
     }
 
     override fun setSelected(selected: Boolean) {
-        if (isSelected == selected) {
+        if (!manualInput || isSelected == selected) {
             return
         }
 
@@ -225,6 +239,15 @@ class SwipePicker : GridLayout {
             inputEditText.setSelection(0)
             inputEditText.clearFocus()
         }
+    }
+
+    @Suppress("UNUSED_PARAMETER")
+    private fun onInputActionDone(view: TextView, actionId: Int, event: KeyEvent?): Boolean {
+        if (actionId == EditorInfo.IME_ACTION_DONE) {
+            isSelected = false
+            return true
+        }
+        return false
     }
 
     private fun EditText.showKeyboard() {
