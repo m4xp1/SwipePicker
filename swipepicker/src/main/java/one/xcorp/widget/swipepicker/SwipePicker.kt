@@ -2,7 +2,6 @@ package one.xcorp.widget.swipepicker
 
 import android.content.Context
 import android.content.Context.INPUT_METHOD_SERVICE
-import android.support.annotation.IdRes
 import android.support.v4.view.GestureDetectorCompat
 import android.support.v4.view.ViewCompat
 import android.support.v4.widget.TextViewCompat
@@ -20,9 +19,6 @@ import android.widget.GridLayout
 import android.widget.TextView
 import java.text.NumberFormat
 import java.util.*
-
-
-private const val ANIMATION_DURATION = 200L
 
 class SwipePicker : GridLayout {
 
@@ -46,14 +42,18 @@ class SwipePicker : GridLayout {
         }
 
 
+    companion object {
+        private const val ANIMATION_DURATION = 200L
+    }
+
     private val gestureDetector: GestureDetectorCompat
 
     private val hintTextView by lazy { findViewById<TextView>(android.R.id.hint) }
     private val backgroundView by lazy { findViewById<View>(android.R.id.background) }
     private val inputEditText by lazy { findViewById<EditText>(android.R.id.input) }
 
-    private val hintTextSize by textSize(android.R.id.hint)
-    private val inputTextSize by textSize(android.R.id.input)
+    private val hintTextSize: Float
+    private val inputTextSize: Float
     private var activated = false
 
     private var hintAnimation: LabelAnimation? = null
@@ -76,7 +76,10 @@ class SwipePicker : GridLayout {
         inflate(context, R.layout.swipe_picker, this)
         obtainStyledAttributes(context, attrs, defStyleAttr, defStyleRes)
 
-        inputEditText.setOnEditorActionListener(::onInputActionDone)
+        inputEditText.setOnEditorActionListener(::onInputDone)
+
+        hintTextSize = hintTextView.textSize / resources.displayMetrics.scaledDensity
+        inputTextSize = inputEditText.textSize / resources.displayMetrics.scaledDensity
     }
 
     private fun obtainStyledAttributes(
@@ -97,8 +100,9 @@ class SwipePicker : GridLayout {
         TextViewCompat.setTextAppearance(inputEditText,
                 typedArray.getResourceId(R.styleable.SwipePicker_inputTextAppearance,
                         R.style.TextAppearance_XcoRp_Widget_SwipePicker_Input))
-        backgroundView.background = typedArray.getDrawable(
-                R.styleable.SwipePicker_android_background); background = null
+        ViewCompat.setBackground(backgroundView, typedArray.getDrawable(
+                R.styleable.SwipePicker_android_background))
+        ViewCompat.setBackground(this, null)
         activated = typedArray.getBoolean(
                 R.styleable.SwipePicker_android_state_activated, false)
         ViewCompat.setTranslationZ(hintTextView, 1f)
@@ -165,9 +169,6 @@ class SwipePicker : GridLayout {
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
         super.onLayout(changed, left, top, right, bottom)
 
-        hintTextSize.toString() // Need because view not measured before draw
-        inputTextSize.toString() // Need because view not measured before draw
-
         if (changed) {
             isActivated = activated
             hintAnimation?.end()
@@ -180,26 +181,27 @@ class SwipePicker : GridLayout {
 
     override fun setActivated(activated: Boolean) {
         hintAnimation?.cancel()
-        val animation = LabelAnimation(hintTextView).setDuration(ANIMATION_DURATION)
+        hintAnimation = LabelAnimation(hintTextView).setDuration(ANIMATION_DURATION)
 
-        hintAnimation = if (activated) {
-            animation.to(0f, hintTextSize)
-            animation.addEndListener {
-                inputEditText.visibility = View.VISIBLE
-                super.setActivated(activated)
-            }
-        } else {
-            isSelected = false
-            value = defaultValue
+        hintAnimation?.let { animation ->
+            if (activated) {
+                animation.to(0f, hintTextSize)
+                animation.addEndListener {
+                    inputEditText.visibility = View.VISIBLE
+                    super.setActivated(activated)
+                }.start()
+            } else {
+                isSelected = false
+                value = defaultValue
 
-            animation.to((backgroundView.top + inputEditText.top).toFloat(), inputTextSize)
-            animation.addStartListener {
-                inputEditText.visibility = View.INVISIBLE
-                super.setActivated(activated)
+                animation.to((backgroundView.top + inputEditText.top).toFloat(), inputTextSize)
+                animation.addStartListener {
+                    inputEditText.visibility = View.INVISIBLE
+                    super.setActivated(activated)
+                }.start()
             }
         }
 
-        animation.start()
         this.activated = activated
     }
 
@@ -242,7 +244,7 @@ class SwipePicker : GridLayout {
     }
 
     @Suppress("UNUSED_PARAMETER")
-    private fun onInputActionDone(view: TextView, actionId: Int, event: KeyEvent?): Boolean {
+    private fun onInputDone(view: TextView, actionId: Int, event: KeyEvent?): Boolean {
         if (actionId == EditorInfo.IME_ACTION_DONE) {
             isSelected = false
             return true
@@ -258,10 +260,6 @@ class SwipePicker : GridLayout {
     private fun EditText.hideKeyBoard() {
         val imm = context.getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager?
         imm?.hideSoftInputFromWindow(this.windowToken, RESULT_UNCHANGED_SHOWN)
-    }
-
-    private fun textSize(@IdRes resId: Int) = lazy {
-        findViewById<TextView>(resId).textSize / resources.displayMetrics.scaledDensity
     }
 
     private class GestureListener : GestureDetector.SimpleOnGestureListener()
