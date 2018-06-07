@@ -27,5 +27,14 @@
             <flag name="numberDecimal" value="0x00002002" />
         </attr>
         <attr name="android:maxLength" />
+        <attr name="hoverViewStyle" format="reference" />
+    </declare-styleable>
+
+    <declare-styleable name="HoverView">
+        <attr name="android:minWidth" />
+        <attr name="android:padding" />
+        <attr name="android:textSize" />
+        <attr name="android:textColor" />
+        <attr name="android:color" />
     </declare-styleable>
 </resources>

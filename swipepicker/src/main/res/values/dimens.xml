@@ -6,8 +6,12 @@
     <dimen name="swipePicker_radiusCorner">4dp</dimen>
     <dimen name="swipePicker_dashGap">2dp</dimen>
     <dimen name="swipePicker_dashWidth">2dp</dimen>
-
     <dimen name="swipePicker_textSize">16sp</dimen>
 
     <integer name="swipePicker_maxLength">5</integer>
+
+    <dimen name="hoverView_minWidth">28dp</dimen>
+    <dimen name="hoverView_padding">4dp</dimen>
+    <dimen name="hoverView_textSize">14sp</dimen>
+    <dimen name="hoverView_radiusCorner">6dp</dimen>
 </resources>
