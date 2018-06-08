@@ -1,7 +1,6 @@
 package one.xcorp.widget.swipepicker
 
 import android.content.Context
-import android.content.Context.INPUT_METHOD_SERVICE
 import android.support.v4.view.GestureDetectorCompat
 import android.support.v4.view.ViewCompat
 import android.support.v4.widget.TextViewCompat
@@ -14,8 +13,6 @@ import android.view.MotionEvent
 import android.view.SoundEffectConstants.CLICK
 import android.view.View
 import android.view.inputmethod.EditorInfo
-import android.view.inputmethod.InputMethodManager
-import android.view.inputmethod.InputMethodManager.RESULT_UNCHANGED_SHOWN
 import android.widget.EditText
 import android.widget.GridLayout
 import android.widget.TextView
@@ -278,16 +275,6 @@ class SwipePicker : GridLayout {
             return true
         }
         return false
-    }
-
-    private fun EditText.showKeyboard() {
-        val imm = context.getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager?
-        imm?.showSoftInput(this, RESULT_UNCHANGED_SHOWN)
-    }
-
-    private fun EditText.hideKeyBoard() {
-        val imm = context.getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager?
-        imm?.hideSoftInputFromWindow(this.windowToken, RESULT_UNCHANGED_SHOWN)
     }
 
     private inner class GestureListener : GestureDetector.SimpleOnGestureListener() {
