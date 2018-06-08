@@ -6,7 +6,7 @@ import android.support.v4.view.ViewCompat
 import android.util.AttributeSet
 import android.view.View
 
-internal class HoverView : View {
+class HoverView : View {
 
     private val paint = Paint()
     private val contentRect = Rect()
@@ -43,7 +43,7 @@ internal class HoverView : View {
             this(context, attrs, R.style.XcoRp_Style_SwipePicker_HoverView)
 
     constructor(context: Context, attrs: AttributeSet?, styleRes: Int) :
-            super(context, attrs, styleRes) {
+            super(context, attrs, 0) {
         paint.isAntiAlias = true
         paint.textAlign = Paint.Align.CENTER
 
