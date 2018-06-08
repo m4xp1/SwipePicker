@@ -186,6 +186,13 @@ class SwipePicker : GridLayout {
         return true
     }
 
+    override fun dispatchTouchEvent(event: MotionEvent?): Boolean {
+        if (!inputEditText.isEnabled) {
+            return backgroundView.dispatchTouchEvent(event)
+        }
+        return super.dispatchTouchEvent(event)
+    }
+
     @Suppress("UNUSED_PARAMETER")
     private fun onTouch(v: View, event: MotionEvent): Boolean {
         val result = gestureDetector.onTouchEvent(event)
@@ -261,7 +268,6 @@ class SwipePicker : GridLayout {
             inputEditText.selectAll()
             inputEditText.showKeyboard()
         } else {
-            backgroundView.requestFocus()
             inputEditText.hideKeyBoard()
             inputEditText.setSelection(0)
             inputEditText.clearFocus()
@@ -271,6 +277,7 @@ class SwipePicker : GridLayout {
     @Suppress("UNUSED_PARAMETER")
     private fun onInputDone(view: TextView, actionId: Int, event: KeyEvent?): Boolean {
         if (actionId == EditorInfo.IME_ACTION_DONE) {
+            value = view.text.toString().toFloatOrNull() ?: value
             isSelected = false
             return true
         }
