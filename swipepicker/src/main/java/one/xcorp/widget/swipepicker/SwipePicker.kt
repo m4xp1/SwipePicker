@@ -279,6 +279,7 @@ class SwipePicker : GridLayout {
         if (actionId == EditorInfo.IME_ACTION_DONE) {
             value = view.text.toString().toFloatOrNull() ?: value
             isSelected = false
+            playSoundEffect(CLICK)
             return true
         }
         return false
