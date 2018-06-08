@@ -250,7 +250,8 @@ class SwipePicker : GridLayout {
     }
 
     private fun invalidateValue() {
-        val text = NumberFormat.getInstance(US).format(value)
+        val text = NumberFormat.getInstance(US)
+                .apply { isGroupingUsed = false }.format(value)
         if (isHovered) {
             hoverView.text = text
         }
