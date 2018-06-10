@@ -135,6 +135,14 @@ class SwipePicker : GridLayout {
         typedArray.recycle()
     }
 
+    fun getHint(): CharSequence {
+        return hintTextView.text
+    }
+
+    fun setHint(text: CharSequence) {
+        hintTextView.text = text
+    }
+
     /**
      * Read floating array from resources xml and check it.
      * Array must have more than two elements in ascending order and floating type.

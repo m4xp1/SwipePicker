@@ -6,7 +6,7 @@ import android.support.v4.view.ViewCompat
 import android.util.AttributeSet
 import android.view.View
 
-class HoverView : View {
+internal class HoverView : View {
 
     private val paint = Paint()
     private val contentRect = Rect()
