@@ -54,9 +54,8 @@ class SwipePicker : GridLayout {
     private val inputEditText by lazy { findViewById<EditText>(android.R.id.input) }
 
     private var hoverViewStyle = 0
-    private val hintTextSize: Float
-    private val inputTextSize: Float
     private var activated = false
+    private val fontScale: Float
 
     private var hintAnimation: LabelAnimation? = null
 
@@ -81,8 +80,7 @@ class SwipePicker : GridLayout {
         inputEditText.setOnEditorActionListener(::onInputDone)
         backgroundView.setOnTouchListener(::onTouch)
 
-        hintTextSize = hintTextView.textSize / resources.displayMetrics.scaledDensity
-        inputTextSize = inputEditText.textSize / resources.displayMetrics.scaledDensity
+        fontScale = inputEditText.textSize / hintTextView.textSize
     }
 
     private fun obtainStyledAttributes(
@@ -213,7 +211,7 @@ class SwipePicker : GridLayout {
 
         hintAnimation?.let { animation ->
             if (activated) {
-                animation.to(0f, hintTextSize)
+                animation.to(0f, 1f)
                 animation.addEndListener {
                     inputEditText.visibility = View.VISIBLE
                     super.setActivated(activated)
@@ -222,7 +220,11 @@ class SwipePicker : GridLayout {
                 isSelected = false
                 value = defaultValue
 
-                animation.to((backgroundView.top + inputEditText.top).toFloat(), inputTextSize)
+                val scaledHeight = hintTextView.height *
+                        inputEditText.height / hintTextView.height.toFloat()
+                val gravityOffset = (hintTextView.height - scaledHeight) / 2
+
+                animation.to(scaledHeight + gravityOffset + inputEditText.top, fontScale)
                 animation.addStartListener {
                     inputEditText.visibility = View.INVISIBLE
                     super.setActivated(activated)

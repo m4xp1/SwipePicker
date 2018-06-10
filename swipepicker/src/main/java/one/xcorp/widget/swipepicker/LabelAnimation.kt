@@ -1,9 +1,6 @@
 package one.xcorp.widget.swipepicker
 
-import android.animation.Animator
-import android.animation.AnimatorListenerAdapter
-import android.animation.AnimatorSet
-import android.animation.ObjectAnimator
+import android.animation.*
 import android.widget.TextView
 
 internal class LabelAnimation(private val view: TextView) {
@@ -13,12 +10,13 @@ internal class LabelAnimation(private val view: TextView) {
 
     private val animatorSet = AnimatorSet()
 
-    fun to(y: Float, textSize: Float): LabelAnimation {
-        val animY = ObjectAnimator.ofFloat(view, "translationY", y)
-        val animTextSize = ObjectAnimator.ofFloat(view, "textSize",
-                view.textSize / view.resources.displayMetrics.scaledDensity, textSize)
+    fun to(y: Float, scale: Float): LabelAnimation {
+        val animMove = ObjectAnimator.ofFloat(view, "translationY", y)
+        val animScale = ObjectAnimator.ofPropertyValuesHolder(view,
+                PropertyValuesHolder.ofFloat("scaleX", scale),
+                PropertyValuesHolder.ofFloat("scaleY", scale))
 
-        animatorSet.playTogether(animY, animTextSize)
+        animatorSet.playTogether(animMove, animScale)
         return this
     }
 
