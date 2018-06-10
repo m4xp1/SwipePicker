@@ -48,7 +48,7 @@ class SwipePicker : GridLayout {
 
     private val gestureDetector: GestureDetectorCompat
 
-    val hoverView by lazy { HoverView(context, null, hoverViewStyle) }
+    private val hoverView by lazy { HoverView(context, null, hoverViewStyle) }
     private val hintTextView by lazy { findViewById<TextView>(android.R.id.hint) }
     private val backgroundView by lazy { findViewById<View>(android.R.id.background) }
     private val inputEditText by lazy { findViewById<EditText>(android.R.id.input) }
