@@ -218,7 +218,6 @@ class SwipePicker : GridLayout {
                 }.start()
             } else {
                 isSelected = false
-                value = defaultValue
 
                 val scaledHeight = hintTextView.height *
                         inputEditText.height / hintTextView.height.toFloat()
@@ -232,6 +231,7 @@ class SwipePicker : GridLayout {
             }
         }
 
+        value = defaultValue
         this.activated = activated
     }
 
