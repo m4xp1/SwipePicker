@@ -3,14 +3,14 @@ package one.xcorp.widget.swipepicker
 import android.animation.*
 import android.widget.TextView
 
-internal class LabelAnimation(private val view: TextView) {
+internal class HintAnimation(private val view: TextView) {
 
     val isRunning
         get() = animatorSet.isRunning
 
     private val animatorSet = AnimatorSet()
 
-    fun to(y: Float, scale: Float): LabelAnimation {
+    fun to(y: Float, scale: Float): HintAnimation {
         val animMove = ObjectAnimator.ofFloat(view, "translationY", y)
         val animScale = ObjectAnimator.ofPropertyValuesHolder(view,
                 PropertyValuesHolder.ofFloat("scaleX", scale),
@@ -20,12 +20,12 @@ internal class LabelAnimation(private val view: TextView) {
         return this
     }
 
-    fun setDuration(duration: Long): LabelAnimation {
+    fun setDuration(duration: Long): HintAnimation {
         animatorSet.duration = duration
         return this
     }
 
-    fun addStartListener(listener: () -> Unit): LabelAnimation {
+    fun addStartListener(listener: () -> Unit): HintAnimation {
         animatorSet.addListener(object : AnimatorListenerAdapter() {
             override fun onAnimationStart(animation: Animator?) {
                 listener()
@@ -34,7 +34,7 @@ internal class LabelAnimation(private val view: TextView) {
         return this
     }
 
-    fun addEndListener(listener: () -> Unit): LabelAnimation {
+    fun addEndListener(listener: () -> Unit): HintAnimation {
         animatorSet.addListener(object : AnimatorListenerAdapter() {
             override fun onAnimationEnd(animation: Animator?) {
                 listener()
