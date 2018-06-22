@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:color="?android:attr/textColorPrimary" android:state_selected="true" />
-    <item android:color="?android:attr/textColorPrimaryInverse" />
+    <item android:color="@color/swipePicker_text" android:state_pressed="true" />
+    <item android:color="@color/swipePicker_text" android:state_selected="true" />
+    <item android:color="@color/swipePicker_textInverse" />
 </selector>

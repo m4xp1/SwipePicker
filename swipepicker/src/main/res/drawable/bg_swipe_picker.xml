@@ -1,22 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:state_activated="true" android:state_selected="true">
+    <item android:state_activated="true" android:state_pressed="true">
         <shape>
-            <stroke android:width="@dimen/swipePicker_strokeWidth" android:color="?attr/colorPrimary" />
-            <solid android:color="@android:color/white" />
+            <stroke
+                android:width="@dimen/swipePicker_strokeWidth"
+                android:color="@color/swipePicker_primary" />
+            <solid android:color="@color/swipePicker_background" />
             <corners android:radius="@dimen/swipePicker_radiusCorner" />
         </shape>
     </item>
-    <item android:state_activated="true" android:state_selected="false">
+    <item android:state_activated="true" android:state_selected="true">
         <shape>
-            <solid android:color="?attr/colorPrimary" />
+            <stroke
+                android:width="@dimen/swipePicker_strokeWidth"
+                android:color="@color/swipePicker_primary" />
+            <solid android:color="@color/swipePicker_background" />
+            <corners android:radius="@dimen/swipePicker_radiusCorner" />
+        </shape>
+    </item>
+    <item
+        android:state_activated="true"
+        android:state_pressed="false"
+        android:state_selected="false">
+        <shape>
+            <solid android:color="@color/swipePicker_primary" />
             <corners android:radius="@dimen/swipePicker_radiusCorner" />
         </shape>
     </item>
     <item>
         <shape>
-            <stroke android:width="@dimen/swipePicker_strokeWidth" android:color="?attr/colorPrimary" android:dashGap="@dimen/swipePicker_dashGap" android:dashWidth="@dimen/swipePicker_dashWidth" />
-            <solid android:color="@android:color/white" />
+            <stroke
+                android:width="@dimen/swipePicker_strokeWidth"
+                android:color="@color/swipePicker_primary"
+                android:dashGap="@dimen/swipePicker_dashGap"
+                android:dashWidth="@dimen/swipePicker_dashWidth" />
+            <solid android:color="@color/swipePicker_background" />
             <corners android:radius="@dimen/swipePicker_radiusCorner" />
         </shape>
     </item>
