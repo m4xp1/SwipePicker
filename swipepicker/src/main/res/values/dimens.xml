@@ -10,6 +10,7 @@
 
     <integer name="swipePicker_maxLength">5</integer>
 
+    <dimen name="hoverView_margin">5dp</dimen>
     <dimen name="hoverView_minWidth">28dp</dimen>
     <dimen name="hoverView_padding">4dp</dimen>
     <dimen name="hoverView_textSize">14sp</dimen>

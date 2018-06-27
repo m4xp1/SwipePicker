@@ -3,6 +3,7 @@ package one.xcorp.widget.swipepicker
 import android.content.Context
 import android.graphics.*
 import android.support.v4.content.ContextCompat
+import android.support.v4.view.ViewCompat
 import android.util.AttributeSet
 import android.view.View
 
@@ -24,7 +25,7 @@ internal class HoverView : View {
             field = value
             invalidate()
         }
-    var text = ""
+    var text: CharSequence = ""
         set(value) {
             field = value
             requestLayout()
@@ -68,10 +69,12 @@ internal class HoverView : View {
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        paint.getTextBounds(text, 0, text.length, contentRect)
+        paint.getTextBounds(text.toString(), 0, text.length, contentRect)
 
-        contentRect.right += paddingLeft + paddingRight
-        contentRect.bottom += paddingTop + paddingBottom
+        val right = Math.max(ViewCompat.getMinimumWidth(this),
+                paddingLeft + contentRect.width() + paddingRight)
+        val bottom = paddingTop + textSize.toInt() + paddingBottom
+        contentRect.set(0, 0, right, bottom)
 
         val arrowSize = contentRect.height() / 2.5f
 
@@ -120,7 +123,7 @@ internal class HoverView : View {
         paint.color = textColor
         val fm = paint.fontMetrics
 
-        val baseline = contentRect.height() / 2 + (fm.descent - fm.ascent) / 2f - fm.descent
-        canvas.drawText(text, (contentRect.width() / 2).toFloat(), baseline, paint)
+        val baseline = contentRect.height() / 2 + (fm.descent - fm.ascent) / 2 - fm.descent
+        canvas.drawText(text, 0, text.length, contentRect.width() / 2f, baseline, paint)
     }
 }
