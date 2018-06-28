@@ -372,13 +372,16 @@ class SwipePicker : LinearLayout {
     }
 
     private fun onInputCancel(): Boolean {
-        inputEditText.setText(numberFormat.format(value))
-        isSelected = false
-        return true
+        if (isSelected) {
+            inputEditText.setText(numberFormat.format(value))
+            isSelected = false
+            return true
+        }
+        return false
     }
 
-    private fun onInputDone(view: TextView, actionId: Int, event: KeyEvent): Boolean {
-        if (actionId == EditorInfo.IME_ACTION_DONE || event.keyCode == KeyEvent.KEYCODE_ENTER) {
+    private fun onInputDone(view: TextView, actionId: Int, event: KeyEvent?): Boolean {
+        if (actionId == EditorInfo.IME_ACTION_DONE || event?.keyCode == KeyEvent.KEYCODE_ENTER) {
             value = view.text.toString().toFloatOrNull() ?: value
             isSelected = false
             playSoundEffect(CLICK)
