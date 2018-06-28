@@ -3,6 +3,7 @@ package one.xcorp.widget.swipepicker
 import android.content.Context
 import android.util.AttributeSet
 import android.view.KeyEvent
+import android.view.MotionEvent
 import android.view.inputmethod.InputMethodManager
 
 internal class EditText(context: Context?, attrs: AttributeSet?) :
@@ -14,12 +15,16 @@ internal class EditText(context: Context?, attrs: AttributeSet?) :
         backPressedListener = listener
     }
 
+    override fun dispatchTouchEvent(event: MotionEvent?): Boolean {
+        return isEnabled && super.dispatchTouchEvent(event)
+    }
+
     override fun onKeyPreIme(keyCode: Int, event: KeyEvent): Boolean {
         if (keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_UP) {
-            return backPressedListener?.invoke() ?: super.dispatchKeyEvent(event)
+            return backPressedListener?.invoke() ?: super.onKeyPreIme(keyCode, event)
         }
 
-        return super.dispatchKeyEvent(event)
+        return super.onKeyPreIme(keyCode, event)
     }
 }
 

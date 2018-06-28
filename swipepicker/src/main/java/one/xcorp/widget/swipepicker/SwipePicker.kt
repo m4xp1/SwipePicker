@@ -1,38 +1,46 @@
 package one.xcorp.widget.swipepicker
 
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
 import android.content.Context
+import android.graphics.PixelFormat
+import android.graphics.drawable.Drawable
 import android.support.v4.view.GestureDetectorCompat
 import android.support.v4.view.ViewCompat
 import android.support.v4.widget.TextViewCompat
+import android.support.v7.widget.AppCompatTextView
 import android.text.InputFilter
 import android.text.InputType
 import android.util.AttributeSet
-import android.view.GestureDetector
-import android.view.KeyEvent
-import android.view.MotionEvent
+import android.view.*
+import android.view.MotionEvent.ACTION_CANCEL
+import android.view.MotionEvent.ACTION_UP
 import android.view.SoundEffectConstants.CLICK
-import android.view.View
+import android.view.ViewGroup.LayoutParams.MATCH_PARENT
+import android.view.WindowManager.LayoutParams.*
 import android.view.inputmethod.EditorInfo
-import android.view.inputmethod.InputMethodManager
-import android.widget.EditText
-import android.widget.GridLayout
+import android.widget.LinearLayout
 import android.widget.TextView
 import java.text.NumberFormat
-import java.util.Locale.US
+import java.util.*
+import kotlin.properties.Delegates
 
-class SwipePicker : GridLayout {
+class SwipePicker : LinearLayout {
 
-    var scaleValues: FloatArray? = null
-    var minValue = 1f
-    var maxValue = 10f
-    var stepSize = 1f
-    var defaultValue = 1f
-    var value = 1f
+    companion object {
+        private const val ANIMATION_DURATION = 200L
+    }
+
+    // <editor-fold desc="Properties">
+    var hint: CharSequence
+        get() = hintTextView.text
         set(value) {
-            field = value
-            invalidateValue()
+            hintTextView.text = value
         }
-    var restrictions = Restrictions.LOWER
+    var inputBackground: Drawable
+        get() = backgroundView.background
+        set(value) = ViewCompat.setBackground(backgroundView, value)
+    var deactivateGesture = true
     var manualInput = true
         set(enable) {
             if (!enable) {
@@ -40,24 +48,63 @@ class SwipePicker : GridLayout {
             }
             field = enable
         }
+    var inputType: Int
+        get() = inputEditText.inputType
+        set(value) {
+            if (value !in arrayOf(2, 4098, 8194, 12290)) {
+                throw IllegalArgumentException("Only TYPE_CLASS_NUMBER with" +
+                        "TYPE_NUMBER_FLAG_SIGNED or TYPE_NUMBER_FLAG_DECIMAL are allowed")
+            }
+            inputEditText.inputType = value
+        }
+    var scaleValues: FloatArray? = null
+        set(value) {
+            val oldValue = field
+            val newValue = value
 
+            if (minValue == oldValue?.first()) {
+                minValue = newValue?.first() ?: minValue
+            }
+            if (maxValue == oldValue?.last()) {
+                maxValue = newValue?.last() ?: maxValue
+            }
 
-    private companion object {
-        const val ANIMATION_DURATION = 200L
-    }
+            field = value
+            invalidateValue()
+        }
+    var minValue by Delegates.observable(1f) { _, _, _ -> invalidateValue() }
+    var maxValue by Delegates.observable(10f) { _, _, _ -> invalidateValue() }
+    var stepSize = 1f
+    var defaultValue = minValue
+    var value by Delegates.observable(defaultValue) { _, _, _ -> invalidateValue() }
+    var restriction = Restriction.LOWER
+        set(value) {
+            if (value !in arrayOf(Restriction.NONE, Restriction.LOWER,
+                            Restriction.UPPER, Restriction.LOWER or Restriction.UPPER)) {
+                throw IllegalArgumentException("Unknown restriction type")
+            }
+            field = value
+            invalidateValue()
+        }
+    // </editor-fold>
 
+    private val windowManager: WindowManager
     private val gestureDetector: GestureDetectorCompat
 
-    private val hoverView by lazy { HoverView(context, null, hoverViewStyle) }
-    private val hintTextView by lazy { findViewById<TextView>(android.R.id.hint) }
+    private val hoverView by lazy { createHoverView() }
+    private val hintTextView by lazy { findViewById<AppCompatTextView>(android.R.id.hint) }
     private val backgroundView by lazy { findViewById<View>(android.R.id.background) }
     private val inputEditText by lazy { findViewById<EditText>(android.R.id.input) }
 
-    private var hoverViewStyle = 0
     private var activated = false
-    private val fontScale: Float
+    private var hoverViewStyle = R.style.XcoRp_Style_SwipePicker_HoverView
 
-    private var hintAnimation: LabelAnimation? = null
+    private val fontScale: Float
+    private val backgroundViewPosition = IntArray(2)
+    private val hoverViewMargin = resources.getDimensionPixelSize(R.dimen.hoverView_margin).toFloat()
+    private val hoverViewLayoutParams by lazy { createHoverViewLayoutParams() }
+    private val numberFormat = NumberFormat.getInstance(Locale.US).apply { isGroupingUsed = false }
+    private var hintAnimation: HintAnimation? = null
 
     constructor(context: Context) : this(context, null)
 
@@ -68,19 +115,42 @@ class SwipePicker : GridLayout {
 
     constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int, defStyleRes: Int) :
             super(context, attrs, defStyleAttr) {
+        windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
         gestureDetector = GestureDetectorCompat(context, GestureListener())
         gestureDetector.setIsLongpressEnabled(false)
 
-        clipChildren = false
         orientation = VERTICAL
+        isChildrenDrawingOrderEnabled = true
 
         inflate(context, R.layout.swipe_picker, this)
         obtainStyledAttributes(context, attrs, defStyleAttr, defStyleRes)
 
-        inputEditText.setOnEditorActionListener(::onInputDone)
         backgroundView.setOnTouchListener(::onTouch)
+        inputEditText.setOnBackPressedListener(::onInputCancel)
+        inputEditText.setOnEditorActionListener(::onInputDone)
 
         fontScale = inputEditText.textSize / hintTextView.textSize
+    }
+
+    /**
+     * It is required that the background does not hide a hint.
+     */
+    override fun getChildDrawingOrder(childCount: Int, i: Int) =
+            if (i == 0) 1 else if (i == 1) 0 else i
+
+    private fun createHoverView(): HoverView {
+        val hoverView = HoverView(context, defStyleRes = hoverViewStyle)
+        hoverView.alpha = 0f
+
+        return hoverView
+    }
+
+    private fun createHoverViewLayoutParams() = WindowManager.LayoutParams().apply {
+        width = MATCH_PARENT
+        height = MATCH_PARENT
+        format = PixelFormat.TRANSLUCENT
+        flags = (FLAG_NOT_FOCUSABLE or FLAG_NOT_TOUCHABLE)
+        type = TYPE_APPLICATION_PANEL
     }
 
     private fun obtainStyledAttributes(
@@ -88,26 +158,32 @@ class SwipePicker : GridLayout {
         val typedArray = context.obtainStyledAttributes(
                 attrs, R.styleable.SwipePicker, defStyleAttr, defStyleRes)
 
-        minimumWidth = typedArray.getDimensionPixelSize(R.styleable.SwipePicker_android_minWidth,
+        minimumWidth = typedArray.getDimensionPixelSize(
+                R.styleable.SwipePicker_android_minWidth,
                 resources.getDimensionPixelSize(R.dimen.swipePicker_minWidth))
-        val padding = typedArray.getDimensionPixelSize(R.styleable.SwipePicker_android_padding,
+        val padding = typedArray.getDimensionPixelSize(
+                R.styleable.SwipePicker_android_padding,
                 resources.getDimensionPixelSize(R.dimen.swipePicker_padding))
         hintTextView.setPadding(padding, padding, padding, padding)
         inputEditText.setPadding(padding, padding, padding, padding)
         setPadding(0, 0, 0, 0)
-        TextViewCompat.setTextAppearance(hintTextView,
-                typedArray.getResourceId(R.styleable.SwipePicker_hintTextAppearance,
-                        R.style.XcoRp_TextAppearance_SwipePicker_Hint))
-        TextViewCompat.setTextAppearance(inputEditText,
-                typedArray.getResourceId(R.styleable.SwipePicker_inputTextAppearance,
-                        R.style.XcoRp_TextAppearance_SwipePicker_Input))
-        ViewCompat.setBackground(backgroundView, typedArray.getDrawable(
-                R.styleable.SwipePicker_android_background))
-        ViewCompat.setBackground(this, null)
+        hint = typedArray.getString(R.styleable.SwipePicker_android_hint)
+        setMaxLength(typedArray.getInt(R.styleable.SwipePicker_android_maxLength,
+                resources.getInteger(R.integer.swipePicker_maxLength)))
         activated = typedArray.getBoolean(
-                R.styleable.SwipePicker_android_state_activated, false)
-        ViewCompat.setTranslationZ(hintTextView, 1f)
-        hintTextView.text = typedArray.getString(R.styleable.SwipePicker_android_hint)
+                R.styleable.SwipePicker_android_state_activated, activated)
+        setHintTextAppearance(typedArray.getResourceId(
+                R.styleable.SwipePicker_hintTextAppearance,
+                R.style.XcoRp_TextAppearance_SwipePicker_Hint))
+        setInputTextAppearance(typedArray.getResourceId(
+                R.styleable.SwipePicker_inputTextAppearance,
+                R.style.XcoRp_TextAppearance_SwipePicker_Input))
+        inputBackground = typedArray.getDrawable(R.styleable.SwipePicker_inputBackground)
+        deactivateGesture = typedArray
+                .getBoolean(R.styleable.SwipePicker_deactivateGesture, deactivateGesture)
+        manualInput = typedArray.getBoolean(R.styleable.SwipePicker_manualInput, manualInput)
+        inputType = typedArray.getInt(
+                R.styleable.SwipePicker_inputType, InputType.TYPE_CLASS_NUMBER)
         if (typedArray.hasValue(R.styleable.SwipePicker_scaleValues)) {
             scaleValues = obtainScaleValues(
                     typedArray.getResourceId(R.styleable.SwipePicker_scaleValues, 0))
@@ -116,31 +192,17 @@ class SwipePicker : GridLayout {
                 R.styleable.SwipePicker_minValue, scaleValues?.first() ?: minValue)
         maxValue = typedArray.getFloat(
                 R.styleable.SwipePicker_maxValue, scaleValues?.last() ?: maxValue)
-        if (!isInEditMode && minValue >= maxValue) {
+        if (minValue >= maxValue) {
             throw IllegalArgumentException("The minimum value must be less than the maximum.")
         }
         stepSize = typedArray.getFloat(R.styleable.SwipePicker_stepSize, stepSize)
         defaultValue = typedArray.getFloat(R.styleable.SwipePicker_value, minValue)
         value = defaultValue
-        restrictions = typedArray.getInt(R.styleable.SwipePicker_restrictions, restrictions)
-        manualInput = typedArray.getBoolean(R.styleable.SwipePicker_manualInput, manualInput)
-        inputEditText.inputType = typedArray.getInt(
-                R.styleable.SwipePicker_inputType, InputType.TYPE_CLASS_NUMBER)
-        inputEditText.filters = arrayOf(InputFilter.LengthFilter(
-                typedArray.getInt(R.styleable.SwipePicker_android_maxLength,
-                        resources.getInteger(R.integer.swipePicker_maxLength))))
-        hoverViewStyle = typedArray.getResourceId(R.styleable.SwipePicker_hoverViewStyle,
-                R.style.XcoRp_Style_SwipePicker_HoverView)
+        restriction = typedArray.getInt(R.styleable.SwipePicker_restriction, restriction)
+        hoverViewStyle = typedArray.getResourceId(
+                R.styleable.SwipePicker_hoverViewStyle, hoverViewStyle)
 
         typedArray.recycle()
-    }
-
-    fun getHint(): CharSequence {
-        return hintTextView.text
-    }
-
-    fun setHint(text: CharSequence) {
-        hintTextView.text = text
     }
 
     /**
@@ -177,12 +239,28 @@ class SwipePicker : GridLayout {
         }
     }
 
+    fun setMaxLength(max: Int) {
+        val filters = inputEditText.filters
+                .filter { f -> f !is InputFilter.LengthFilter }
+                .toMutableList()
+        filters.add(InputFilter.LengthFilter(max))
+        inputEditText.filters = filters.toTypedArray()
+    }
+
+    fun setHintTextAppearance(resId: Int) = TextViewCompat.setTextAppearance(hintTextView, resId)
+
+    fun setInputTextAppearance(resId: Int) = TextViewCompat.setTextAppearance(inputEditText, resId)
+
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
         super.onLayout(changed, left, top, right, bottom)
 
         if (changed) {
             isActivated = activated
             hintAnimation?.end()
+
+            if (isPressed) {
+                invalidateHoverViewPosition()
+            }
         }
     }
 
@@ -193,29 +271,20 @@ class SwipePicker : GridLayout {
         return true
     }
 
-    override fun dispatchTouchEvent(event: MotionEvent?): Boolean {
-        if (!inputEditText.isEnabled) {
-            return backgroundView.dispatchTouchEvent(event)
-        }
-        return super.dispatchTouchEvent(event)
-    }
-
-    @Suppress("UNUSED_PARAMETER")
-    private fun onTouch(v: View, event: MotionEvent): Boolean {
+    private fun onTouch(view: View, event: MotionEvent): Boolean {
         val result = gestureDetector.onTouchEvent(event)
-        if (event.action == MotionEvent.ACTION_UP || event.action == MotionEvent.ACTION_CANCEL) {
-            playSoundEffect(CLICK)
+        if (event.action == ACTION_UP || event.action == ACTION_CANCEL) {
+            isPressed = false
+            view.playSoundEffect(CLICK)
         }
         return result
     }
 
-    override fun isActivated(): Boolean {
-        return activated
-    }
+    override fun isActivated() = activated
 
     override fun setActivated(activated: Boolean) {
         hintAnimation?.cancel()
-        hintAnimation = LabelAnimation(hintTextView).setDuration(ANIMATION_DURATION)
+        hintAnimation = HintAnimation(hintTextView).setDuration(ANIMATION_DURATION)
 
         hintAnimation?.let { animation ->
             if (activated) {
@@ -229,9 +298,9 @@ class SwipePicker : GridLayout {
 
                 val scaledHeight = hintTextView.height *
                         inputEditText.height / hintTextView.height.toFloat()
-                val gravityOffset = (hintTextView.height - scaledHeight) / 2
+                val verticalOffset = (hintTextView.height - scaledHeight) / 2
 
-                animation.to(scaledHeight + gravityOffset + inputEditText.top, fontScale)
+                animation.to(scaledHeight + verticalOffset + inputEditText.top, fontScale)
                 animation.addStartListener {
                     inputEditText.visibility = View.INVISIBLE
                     super.setActivated(activated)
@@ -239,7 +308,9 @@ class SwipePicker : GridLayout {
             }
         }
 
-        value = defaultValue
+        if (this.activated != activated) {
+            value = defaultValue
+        }
         this.activated = activated
     }
 
@@ -248,25 +319,39 @@ class SwipePicker : GridLayout {
             return
         }
 
-        if (!isActivated) {
+        super.setSelected(selected)
+
+        if (!selected) {
+            onInputCancel()
+        } else if (!isActivated) {
             isActivated = true
         }
 
-        super.setSelected(selected)
-        if (hintAnimation?.isRunning == true) {
-            hintAnimation?.addEndListener { setInputEnabled(isSelected) }
-        } else {
+        if (hintAnimation?.isRunning != true) {
             setInputEnabled(selected)
+        } else {
+            hintAnimation?.addEndListener { setInputEnabled(isSelected) }
         }
     }
 
-    private fun invalidateValue() {
-        val text = NumberFormat.getInstance(US)
-                .apply { isGroupingUsed = false }.format(value)
-        if (isHovered) {
-            hoverView.text = text
+    override fun setPressed(pressed: Boolean) {
+        if (pressed == isPressed) {
+            return
         }
-        inputEditText.setText(text)
+
+        if (pressed && !isActivated) {
+            hintTextView.alpha = 0f
+
+            isActivated = true
+            hintAnimation?.end()
+        }
+
+        super.setPressed(pressed)
+        if (pressed) {
+            showHoverView()
+        } else {
+            hideHoverView()
+        }
     }
 
     private fun setInputEnabled(enabled: Boolean) {
@@ -280,15 +365,20 @@ class SwipePicker : GridLayout {
             inputEditText.selectAll()
             inputEditText.showKeyboard()
         } else {
-            inputEditText.hideKeyBoard()
             inputEditText.setSelection(0)
             inputEditText.clearFocus()
+            inputEditText.hideKeyBoard()
         }
     }
 
-    @Suppress("UNUSED_PARAMETER")
-    private fun onInputDone(view: TextView, actionId: Int, event: KeyEvent?): Boolean {
-        if (actionId == EditorInfo.IME_ACTION_DONE) {
+    private fun onInputCancel(): Boolean {
+        inputEditText.setText(numberFormat.format(value))
+        isSelected = false
+        return true
+    }
+
+    private fun onInputDone(view: TextView, actionId: Int, event: KeyEvent): Boolean {
+        if (actionId == EditorInfo.IME_ACTION_DONE || event.keyCode == KeyEvent.KEYCODE_ENTER) {
             value = view.text.toString().toFloatOrNull() ?: value
             isSelected = false
             playSoundEffect(CLICK)
@@ -297,34 +387,89 @@ class SwipePicker : GridLayout {
         return false
     }
 
-    private fun EditText.showKeyboard() {
-        val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager?
-        imm?.showSoftInput(this, InputMethodManager.RESULT_UNCHANGED_SHOWN)
+    private fun showHoverView() {
+        hoverView.text = inputEditText.text
+        invalidateHoverViewPosition()
+
+        hintTextView.animate().alpha(0f).setDuration(ANIMATION_DURATION).start()
+        hoverView.animate().alpha(1f).setDuration(ANIMATION_DURATION)
+                .setListener(object : AnimatorListenerAdapter() {
+                    override fun onAnimationStart(animation: Animator) {
+                        if (hoverView.parent == null) {
+                            windowManager.addView(hoverView, hoverViewLayoutParams)
+                        }
+                    }
+                }).start()
     }
 
-    private fun EditText.hideKeyBoard() {
-        val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager?
-        imm?.hideSoftInputFromWindow(this.windowToken, InputMethodManager.RESULT_UNCHANGED_SHOWN)
+    private fun hideHoverView() {
+        hintTextView.animate().alpha(1f).setDuration(0).start()
+        hoverView.animate().alpha(0f).setDuration(0)
+                .setListener(object : AnimatorListenerAdapter() {
+                    override fun onAnimationEnd(animation: Animator) {
+                        if (hoverView.parent != null) {
+                            windowManager.removeViewImmediate(hoverView)
+                        }
+                    }
+                }).start()
+    }
+
+    private fun invalidateHoverViewPosition() {
+        hoverView.measure(MeasureSpec.EXACTLY, MeasureSpec.EXACTLY)
+        backgroundView.getLocationOnScreen(backgroundViewPosition)
+
+        hoverView.x = backgroundViewPosition[0] +
+                backgroundView.width / 2f - hoverView.measuredWidth / 2f
+        hoverView.y = backgroundViewPosition[1] -
+                hoverView.measuredHeight - hoverViewMargin
+    }
+
+    private fun invalidateValue() {
+        inputEditText.setText(numberFormat.format(value))
+        if (isPressed) {
+            hoverView.text = inputEditText.text
+            invalidateHoverViewPosition()
+        }
+    }
+
+    object Restriction {
+        const val NONE = 0x00000000
+        const val LOWER = 0x00000001
+        const val UPPER = 0x00000002
     }
 
     private inner class GestureListener : GestureDetector.SimpleOnGestureListener() {
 
+        private var isShowPress = false // used to eliminate flicker
+
         override fun onDown(event: MotionEvent): Boolean {
+            isShowPress = false
             return true
         }
 
         override fun onShowPress(e: MotionEvent) {
-
+            isPressed = true
+            isShowPress = true
         }
 
         override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
-            isSelected = true
+            if (!isShowPress) {
+                isSelected = true
+            }
             return true
         }
 
         override fun onDoubleTap(e: MotionEvent): Boolean {
-            isActivated = false
-            return true
+            if (deactivateGesture) {
+                isActivated = false
+                return true
+            }
+            return false
+        }
+
+        override fun onScroll(e1: MotionEvent?, e2: MotionEvent?, distanceX: Float, distanceY: Float): Boolean {
+            isPressed = true
+            return false
         }
     }
 }

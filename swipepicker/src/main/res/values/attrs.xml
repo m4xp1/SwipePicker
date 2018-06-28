@@ -5,28 +5,29 @@
     <declare-styleable name="SwipePicker">
         <attr name="android:minWidth" />
         <attr name="android:padding" />
+        <attr name="android:hint" />
+        <attr name="android:maxLength" />
+        <attr name="android:state_activated" />
         <attr name="hintTextAppearance" format="reference" />
         <attr name="inputTextAppearance" format="reference" />
-        <attr name="android:background" />
-        <attr name="android:state_activated" />
-        <attr name="android:hint" />
-        <attr name="scaleValues" format="reference" />
-        <attr name="minValue" format="float" />
-        <attr name="maxValue" format="float" />
-        <attr name="stepSize" format="float" />
-        <attr name="value" format="float" />
-        <attr name="restrictions">
-            <flag name="none" value="0x00000000" />
-            <flag name="lower" value="0x00000001" />
-            <flag name="upper" value="0x00000002" />
-        </attr>
+        <attr name="inputBackground" format="color|reference" />
+        <attr name="deactivateGesture" format="boolean" />
         <attr name="manualInput" format="boolean" />
         <attr name="inputType">
             <flag name="number" value="0x00000002" />
             <flag name="numberSigned" value="0x00001002" />
             <flag name="numberDecimal" value="0x00002002" />
         </attr>
-        <attr name="android:maxLength" />
+        <attr name="scaleValues" format="reference" />
+        <attr name="minValue" format="float" />
+        <attr name="maxValue" format="float" />
+        <attr name="stepSize" format="float" />
+        <attr name="value" format="float" />
+        <attr name="restriction">
+            <flag name="none" value="0x00000000" />
+            <flag name="lower" value="0x00000001" />
+            <flag name="upper" value="0x00000002" />
+        </attr>
         <attr name="hoverViewStyle" format="reference" />
     </declare-styleable>
 
