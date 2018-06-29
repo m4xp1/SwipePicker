@@ -18,10 +18,10 @@
             <flag name="numberSigned" value="0x00001002" />
             <flag name="numberDecimal" value="0x00002002" />
         </attr>
-        <attr name="scaleValues" format="reference" />
+        <attr name="scale" format="reference" />
         <attr name="minValue" format="float" />
         <attr name="maxValue" format="float" />
-        <attr name="stepSize" format="float" />
+        <attr name="step" format="float" />
         <attr name="value" format="float" />
         <attr name="restriction">
             <flag name="none" value="0x00000000" />

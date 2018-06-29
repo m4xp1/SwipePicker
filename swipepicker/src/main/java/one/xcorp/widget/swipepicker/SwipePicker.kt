@@ -57,7 +57,7 @@ class SwipePicker : LinearLayout {
             }
             inputEditText.inputType = value
         }
-    var scaleValues: FloatArray? = null
+    var scale: FloatArray? = null
         set(value) {
             val oldValue = field
             val newValue = value
@@ -74,7 +74,7 @@ class SwipePicker : LinearLayout {
         }
     var minValue by Delegates.observable(1f) { _, _, _ -> invalidateValue() }
     var maxValue by Delegates.observable(10f) { _, _, _ -> invalidateValue() }
-    var stepSize = 1f
+    var step = 1f
     var defaultValue = minValue
     var value by Delegates.observable(defaultValue) { _, _, _ -> invalidateValue() }
     var restriction = Restriction.LOWER
@@ -132,9 +132,7 @@ class SwipePicker : LinearLayout {
         fontScale = inputEditText.textSize / hintTextView.textSize
     }
 
-    /**
-     * It is required that the background does not hide a hint.
-     */
+    // It is required that the background does not hide a hint.
     override fun getChildDrawingOrder(childCount: Int, i: Int) =
             if (i == 0) 1 else if (i == 1) 0 else i
 
@@ -184,18 +182,18 @@ class SwipePicker : LinearLayout {
         manualInput = typedArray.getBoolean(R.styleable.SwipePicker_manualInput, manualInput)
         inputType = typedArray.getInt(
                 R.styleable.SwipePicker_inputType, InputType.TYPE_CLASS_NUMBER)
-        if (typedArray.hasValue(R.styleable.SwipePicker_scaleValues)) {
-            scaleValues = obtainScaleValues(
-                    typedArray.getResourceId(R.styleable.SwipePicker_scaleValues, 0))
+        if (typedArray.hasValue(R.styleable.SwipePicker_scale)) {
+            scale = obtainScale(
+                    typedArray.getResourceId(R.styleable.SwipePicker_scale, 0))
         }
         minValue = typedArray.getFloat(
-                R.styleable.SwipePicker_minValue, scaleValues?.first() ?: minValue)
+                R.styleable.SwipePicker_minValue, scale?.first() ?: minValue)
         maxValue = typedArray.getFloat(
-                R.styleable.SwipePicker_maxValue, scaleValues?.last() ?: maxValue)
+                R.styleable.SwipePicker_maxValue, scale?.last() ?: maxValue)
         if (minValue >= maxValue) {
             throw IllegalArgumentException("The minimum value must be less than the maximum.")
         }
-        stepSize = typedArray.getFloat(R.styleable.SwipePicker_stepSize, stepSize)
+        step = typedArray.getFloat(R.styleable.SwipePicker_step, step)
         defaultValue = typedArray.getFloat(R.styleable.SwipePicker_value, minValue)
         value = defaultValue
         restriction = typedArray.getInt(R.styleable.SwipePicker_restriction, restriction)
@@ -213,7 +211,7 @@ class SwipePicker : LinearLayout {
      * @return read array
      * @throws IllegalArgumentException if validation fail
      */
-    private fun obtainScaleValues(arrayResId: Int): FloatArray {
+    private fun obtainScale(arrayResId: Int): FloatArray {
         val typedArray = resources.obtainTypedArray(arrayResId)
         try {
             val result = FloatArray(typedArray.length())
@@ -427,6 +425,33 @@ class SwipePicker : LinearLayout {
                 hoverView.measuredHeight - hoverViewMargin
     }
 
+    /**
+     * Return position on scale array. For example: value 2.5, scale {1, 2, 3, 4, 5}
+     * return 1.5 (not exact because there is not exist in array)
+     *
+     * @param scale scale array in ascending order
+     * @param value sought value
+     * @return position in the scale array (not exact if there is not exist in array)
+     */
+    private fun getPositionOnScale(scale: FloatArray, value: Float): Float {
+        if (value > scale.last()) {
+            return scale.size - 0.5f
+        } else if (value == scale.last()) {
+            return scale.size - 1f
+        }
+
+        for (i in scale.indices) {
+            if (value < scale[i]) {
+                return i - 0.5f
+            } else if (value == scale[i]) {
+                return i.toFloat()
+            }
+        }
+
+        throw IllegalStateException("Could not determine position " +
+                "for value=$value in scale array ${scale.contentToString()}")
+    }
+
     private fun invalidateValue() {
         inputEditText.setText(numberFormat.format(value))
         if (isPressed) {
@@ -443,10 +468,23 @@ class SwipePicker : LinearLayout {
 
     private inner class GestureListener : GestureDetector.SimpleOnGestureListener() {
 
+        private val threshold = resources.displayMetrics.density * 25f
+
         private var isShowPress = false // used to eliminate flicker
+        private var initialValue: Float = 0f
+        private var previousDivision: Int = 0
+
+        private lateinit var initialPosition: Lazy<Float?>
 
         override fun onDown(event: MotionEvent): Boolean {
             isShowPress = false
+            initialValue = value
+            previousDivision = 0
+
+            initialPosition = lazy {
+                scale?.let { getPositionOnScale(it, value) }
+            }
+
             return true
         }
 
@@ -470,9 +508,17 @@ class SwipePicker : LinearLayout {
             return false
         }
 
-        override fun onScroll(e1: MotionEvent?, e2: MotionEvent?, distanceX: Float, distanceY: Float): Boolean {
-            isPressed = true
-            return false
+        override fun onScroll(e1: MotionEvent, e2: MotionEvent, distanceX: Float, distanceY: Float): Boolean {
+            val division = Math.round((e2.x - e1.x) / threshold)
+
+            if (previousDivision != division) {
+                isPressed = true // needed because onShowPress is not always called
+            }
+
+
+
+            previousDivision = division
+            return true
         }
     }
 }
