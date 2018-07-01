@@ -48,12 +48,16 @@ class HoverView : View {
     constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) :
             this(context, attrs, defStyleAttr, R.style.XcoRp_Style_SwipePicker_HoverView)
 
-    constructor(context: Context, attrs: AttributeSet? = null,
-                defStyleAttr: Int = 0, defStyleRes: Int) : super(context, attrs, defStyleAttr) {
+    constructor(context: Context,
+                attrs: AttributeSet? = null,
+                defStyleAttr: Int = 0,
+                defStyleRes: Int = R.style.XcoRp_Style_SwipePicker_HoverView)
+            : super(context, attrs, defStyleAttr) {
         paint.isAntiAlias = true
         paint.textAlign = Paint.Align.CENTER
 
-        val typedArray = context.obtainStyledAttributes(defStyleRes, R.styleable.HoverView)
+        val typedArray = context.obtainStyledAttributes(
+                attrs, R.styleable.HoverView, defStyleAttr, defStyleRes)
         minimumWidth = typedArray.getDimensionPixelSize(R.styleable.HoverView_android_minWidth,
                 resources.getDimensionPixelSize(R.dimen.hoverView_minWidth))
         val padding = typedArray.getDimensionPixelSize(R.styleable.HoverView_android_padding,
