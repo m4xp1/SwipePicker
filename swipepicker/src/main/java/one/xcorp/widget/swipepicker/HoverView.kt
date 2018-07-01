@@ -7,8 +7,9 @@ import android.support.v4.view.ViewCompat
 import android.util.AttributeSet
 import android.view.View
 
-internal class HoverView : View {
+class HoverView : View {
 
+    // <editor-fold desc="Properties">
     var textSize
         get() = paint.textSize
         set(value) {
@@ -31,6 +32,7 @@ internal class HoverView : View {
             requestLayout()
             invalidate()
         }
+    // </editor-fold>
 
     private val paint = Paint()
     private val contentRect = Rect()
