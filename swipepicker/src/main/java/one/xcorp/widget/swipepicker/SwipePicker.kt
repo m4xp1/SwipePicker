@@ -3,6 +3,7 @@ package one.xcorp.widget.swipepicker
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.content.Context
+import android.content.res.TypedArray
 import android.graphics.PixelFormat
 import android.graphics.drawable.Drawable
 import android.support.v4.view.GestureDetectorCompat
@@ -11,6 +12,7 @@ import android.support.v4.widget.TextViewCompat
 import android.support.v7.widget.AppCompatTextView
 import android.text.InputFilter
 import android.text.InputType
+import android.text.InputType.*
 import android.util.AttributeSet
 import android.view.*
 import android.view.MotionEvent.ACTION_CANCEL
@@ -40,7 +42,7 @@ class SwipePicker : LinearLayout {
     var inputBackground: Drawable
         get() = backgroundView.background
         set(value) = ViewCompat.setBackground(backgroundView, value)
-    var deactivateGesture = true
+    var allowDeactivate = true
     var manualInput = true
         set(enable) {
             if (!enable) {
@@ -50,48 +52,34 @@ class SwipePicker : LinearLayout {
         }
     var inputType: Int
         get() = inputEditText.inputType
-        set(value) {
-            if (value !in arrayOf(2, 4098, 8194, 12290)) {
-                throw IllegalArgumentException("Only TYPE_CLASS_NUMBER with" +
-                        "TYPE_NUMBER_FLAG_SIGNED or TYPE_NUMBER_FLAG_DECIMAL are allowed")
-            }
-            inputEditText.inputType = value
+        set(value) = when (value) {
+            TYPE_CLASS_NUMBER or TYPE_NUMBER_FLAG_SIGNED or TYPE_NUMBER_FLAG_DECIMAL,
+            TYPE_CLASS_NUMBER or TYPE_NUMBER_FLAG_DECIMAL,
+            TYPE_CLASS_NUMBER or TYPE_NUMBER_FLAG_SIGNED,
+            TYPE_CLASS_NUMBER -> inputEditText.inputType = value
+            else -> throw IllegalArgumentException("Only TYPE_CLASS_NUMBER with " +
+                    "TYPE_NUMBER_FLAG_SIGNED or TYPE_NUMBER_FLAG_DECIMAL are allowed here.")
         }
-    var scale: FloatArray? = null
+    var scale: List<Float>? = null
+        get() = field?.toList()
         set(value) {
-            val oldValue = field
-            val newValue = value
-
-            if (minValue == oldValue?.first()) {
-                minValue = newValue?.first() ?: minValue
+            value?.let {
+                val isAscending = !it.isEmpty() && it.windowed(2).all { (a, b) -> a < b }
+                if (!isAscending) throw IllegalArgumentException("Invalid values scale format. " +
+                        "An array must have one or more elements in ascending order.")
             }
-            if (maxValue == oldValue?.last()) {
-                maxValue = newValue?.last() ?: maxValue
-            }
-
-            field = value
-            invalidateValue()
+            field = value?.toList()
         }
-    var minValue by Delegates.observable(1f) { _, _, _ -> invalidateValue() }
-    var maxValue by Delegates.observable(10f) { _, _, _ -> invalidateValue() }
+    var minValue by Delegates.observable(-Float.MAX_VALUE) { _, _, _ -> invalidateValue() }
+    var maxValue by Delegates.observable(Float.MAX_VALUE) { _, _, _ -> invalidateValue() }
     var step = 1f
-    var defaultValue = minValue
-    var value by Delegates.observable(defaultValue) { _, _, _ -> invalidateValue() }
-    var restriction = Restriction.LOWER
-        set(value) {
-            if (value !in arrayOf(Restriction.NONE, Restriction.LOWER,
-                            Restriction.UPPER, Restriction.LOWER or Restriction.UPPER)) {
-                throw IllegalArgumentException("Unknown restriction type")
-            }
-            field = value
-            invalidateValue()
-        }
+    var value by Delegates.observable(1f) { _, _, _ -> invalidateValue() }
+    val hoverView by lazy { createHoverView() }
     // </editor-fold>
 
     private val windowManager: WindowManager
     private val gestureDetector: GestureDetectorCompat
 
-    private val hoverView by lazy { createHoverView() }
     private val hintTextView by lazy { findViewById<AppCompatTextView>(android.R.id.hint) }
     private val backgroundView by lazy { findViewById<View>(android.R.id.background) }
     private val inputEditText by lazy { findViewById<EditText>(android.R.id.input) }
@@ -136,12 +124,8 @@ class SwipePicker : LinearLayout {
     override fun getChildDrawingOrder(childCount: Int, i: Int) =
             if (i == 0) 1 else if (i == 1) 0 else i
 
-    private fun createHoverView(): HoverView {
-        val hoverView = HoverView(context, defStyleRes = hoverViewStyle)
-        hoverView.alpha = 0f
-
-        return hoverView
-    }
+    private fun createHoverView() = HoverView(context,
+            defStyleRes = hoverViewStyle).apply { alpha = 0f }
 
     private fun createHoverViewLayoutParams() = WindowManager.LayoutParams().apply {
         width = MATCH_PARENT
@@ -159,12 +143,6 @@ class SwipePicker : LinearLayout {
         minimumWidth = typedArray.getDimensionPixelSize(
                 R.styleable.SwipePicker_android_minWidth,
                 resources.getDimensionPixelSize(R.dimen.swipePicker_minWidth))
-        val padding = typedArray.getDimensionPixelSize(
-                R.styleable.SwipePicker_android_padding,
-                resources.getDimensionPixelSize(R.dimen.swipePicker_padding))
-        hintTextView.setPadding(padding, padding, padding, padding)
-        inputEditText.setPadding(padding, padding, padding, padding)
-        setPadding(0, 0, 0, 0)
         hint = typedArray.getString(R.styleable.SwipePicker_android_hint)
         setMaxLength(typedArray.getInt(R.styleable.SwipePicker_android_maxLength,
                 resources.getInteger(R.integer.swipePicker_maxLength)))
@@ -177,26 +155,19 @@ class SwipePicker : LinearLayout {
                 R.styleable.SwipePicker_inputTextAppearance,
                 R.style.XcoRp_TextAppearance_SwipePicker_Input))
         inputBackground = typedArray.getDrawable(R.styleable.SwipePicker_inputBackground)
-        deactivateGesture = typedArray
-                .getBoolean(R.styleable.SwipePicker_deactivateGesture, deactivateGesture)
+        allowDeactivate = typedArray
+                .getBoolean(R.styleable.SwipePicker_allowDeactivate, allowDeactivate)
         manualInput = typedArray.getBoolean(R.styleable.SwipePicker_manualInput, manualInput)
         inputType = typedArray.getInt(
                 R.styleable.SwipePicker_inputType, InputType.TYPE_CLASS_NUMBER)
-        if (typedArray.hasValue(R.styleable.SwipePicker_scale)) {
-            scale = obtainScale(
-                    typedArray.getResourceId(R.styleable.SwipePicker_scale, 0))
-        }
-        minValue = typedArray.getFloat(
-                R.styleable.SwipePicker_minValue, scale?.first() ?: minValue)
-        maxValue = typedArray.getFloat(
-                R.styleable.SwipePicker_maxValue, scale?.last() ?: maxValue)
+        scale = typedArray.getFloatArray(R.styleable.SwipePicker_scale)?.toList()
+        minValue = typedArray.getFloat(R.styleable.SwipePicker_minValue, minValue)
+        maxValue = typedArray.getFloat(R.styleable.SwipePicker_maxValue, maxValue)
         if (minValue >= maxValue) {
-            throw IllegalArgumentException("The minimum value must be less than the maximum.")
+            throw IllegalArgumentException("The minimum value is greater than the maximum.")
         }
         step = typedArray.getFloat(R.styleable.SwipePicker_step, step)
-        defaultValue = typedArray.getFloat(R.styleable.SwipePicker_value, minValue)
-        value = defaultValue
-        restriction = typedArray.getInt(R.styleable.SwipePicker_restriction, restriction)
+        value = typedArray.getFloat(R.styleable.SwipePicker_value, value)
         hoverViewStyle = typedArray.getResourceId(
                 R.styleable.SwipePicker_hoverViewStyle, hoverViewStyle)
 
@@ -204,36 +175,25 @@ class SwipePicker : LinearLayout {
     }
 
     /**
-     * Read floating array from resources xml and check it.
-     * Array must have more than two elements in ascending order and floating type.
+     * Read floating array from resources xml.
      *
-     * @param arrayResId xml resource identifier
-     * @return read array
-     * @throws IllegalArgumentException if validation fail
+     * @param index Index of attribute to retrieve.
+     * @return Read floating array. Returns {@code null} if the given resId does not exist.
      */
-    private fun obtainScale(arrayResId: Int): FloatArray {
-        val typedArray = resources.obtainTypedArray(arrayResId)
-        try {
+    private fun TypedArray.getFloatArray(index: Int): FloatArray? {
+        var typedArray: TypedArray? = null
+        return try {
+            typedArray = resources.obtainTypedArray(getResourceId(index, 0))
+
             val result = FloatArray(typedArray.length())
-
-            var isValid = result.size >= 2
-            var i = 0
-            while (isValid && ++i < result.size) {
-                result[i - 1] = typedArray.getFloat(i - 1, 0f)
+            for (i in 0 until typedArray.length()) {
                 result[i] = typedArray.getFloat(i, 0f)
-                if (result[i - 1] >= result[i]) {
-                    isValid = false
-                }
             }
-
-            if (!isValid) {
-                throw IllegalArgumentException("Invalid array format for the value scale. " +
-                        "An array must have more than two elements in ascending order.")
-            }
-
-            return result
+            result
+        } catch (e: Throwable) {
+            null
         } finally {
-            typedArray.recycle()
+            typedArray?.recycle()
         }
     }
 
@@ -306,9 +266,6 @@ class SwipePicker : LinearLayout {
             }
         }
 
-        if (this.activated != activated) {
-            value = defaultValue
-        }
         this.activated = activated
     }
 
@@ -433,7 +390,7 @@ class SwipePicker : LinearLayout {
      * @param value sought value
      * @return position in the scale array (not exact if there is not exist in array)
      */
-    private fun getPositionOnScale(scale: FloatArray, value: Float): Float {
+    private fun getPositionOnScale(scale: List<Float>, value: Float): Float {
         if (value > scale.last()) {
             return scale.size - 0.5f
         } else if (value == scale.last()) {
@@ -449,7 +406,7 @@ class SwipePicker : LinearLayout {
         }
 
         throw IllegalStateException("Could not determine position " +
-                "for value=$value in scale array ${scale.contentToString()}")
+                "for value=$value in scale values array $scale.")
     }
 
     private fun invalidateValue() {
@@ -460,15 +417,9 @@ class SwipePicker : LinearLayout {
         }
     }
 
-    object Restriction {
-        const val NONE = 0x00000000
-        const val LOWER = 0x00000001
-        const val UPPER = 0x00000002
-    }
-
     private inner class GestureListener : GestureDetector.SimpleOnGestureListener() {
 
-        private val threshold = resources.displayMetrics.density * 25f
+        private val swipeThreshold = resources.displayMetrics.density * 25f
 
         private var isShowPress = false // used to eliminate flicker
         private var initialValue: Float = 0f
@@ -501,7 +452,7 @@ class SwipePicker : LinearLayout {
         }
 
         override fun onDoubleTap(e: MotionEvent): Boolean {
-            if (deactivateGesture) {
+            if (allowDeactivate) {
                 isActivated = false
                 return true
             }
@@ -509,10 +460,9 @@ class SwipePicker : LinearLayout {
         }
 
         override fun onScroll(e1: MotionEvent, e2: MotionEvent, distanceX: Float, distanceY: Float): Boolean {
-            val division = Math.round((e2.x - e1.x) / threshold)
-
-            if (previousDivision != division) {
-                isPressed = true // needed because onShowPress is not always called
+            val division = Math.round((e2.x - e1.x) / swipeThreshold)
+            if (!isShowPress && previousDivision != division) {
+                onShowPress(e2) // needed because onShowPress is not always called
             }
 
 
