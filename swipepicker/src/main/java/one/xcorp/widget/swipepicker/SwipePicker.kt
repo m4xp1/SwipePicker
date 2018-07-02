@@ -1,7 +1,6 @@
 package one.xcorp.widget.swipepicker
 
-import android.animation.Animator
-import android.animation.AnimatorListenerAdapter
+import android.animation.*
 import android.content.Context
 import android.content.res.TypedArray
 import android.graphics.PixelFormat
@@ -25,7 +24,6 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import java.text.NumberFormat
 import java.util.*
-import kotlin.properties.Delegates
 
 class SwipePicker : LinearLayout {
 
@@ -52,16 +50,17 @@ class SwipePicker : LinearLayout {
         }
     var inputType: Int
         get() = inputEditText.inputType
-        set(value) = when (value) {
-            TYPE_CLASS_NUMBER or TYPE_NUMBER_FLAG_SIGNED or TYPE_NUMBER_FLAG_DECIMAL,
-            TYPE_CLASS_NUMBER or TYPE_NUMBER_FLAG_DECIMAL,
-            TYPE_CLASS_NUMBER or TYPE_NUMBER_FLAG_SIGNED,
-            TYPE_CLASS_NUMBER -> inputEditText.inputType = value
-            else -> throw IllegalArgumentException("Only TYPE_CLASS_NUMBER with " +
-                    "TYPE_NUMBER_FLAG_SIGNED or TYPE_NUMBER_FLAG_DECIMAL are allowed here.")
+        set(value) {
+            when (value) {
+                TYPE_CLASS_NUMBER or TYPE_NUMBER_FLAG_SIGNED or TYPE_NUMBER_FLAG_DECIMAL,
+                TYPE_CLASS_NUMBER or TYPE_NUMBER_FLAG_DECIMAL,
+                TYPE_CLASS_NUMBER or TYPE_NUMBER_FLAG_SIGNED,
+                TYPE_CLASS_NUMBER -> inputEditText.inputType = value
+                else -> throw IllegalArgumentException("Only TYPE_CLASS_NUMBER with " +
+                        "TYPE_NUMBER_FLAG_SIGNED or TYPE_NUMBER_FLAG_DECIMAL are allowed here.")
+            }
         }
     var scale: List<Float>? = null
-        get() = field?.toList()
         set(value) {
             value?.let {
                 val isAscending = !it.isEmpty() && it.windowed(2).all { (a, b) -> a < b }
@@ -70,10 +69,34 @@ class SwipePicker : LinearLayout {
             }
             field = value?.toList()
         }
-    var minValue by Delegates.observable(-Float.MAX_VALUE) { _, _, _ -> invalidateValue() }
-    var maxValue by Delegates.observable(Float.MAX_VALUE) { _, _, _ -> invalidateValue() }
+    var minValue = -Float.MAX_VALUE
+        set(_value) {
+            field = _value
+            value = value // check value restriction
+        }
+    var maxValue = Float.MAX_VALUE
+        set(_value) {
+            field = _value
+            value = value // check value restriction
+        }
     var step = 1f
-    var value by Delegates.observable(1f) { _, _, _ -> invalidateValue() }
+    var value = 1f
+        set(value) {
+            val oldValue = field
+            var newValue = value
+
+            if (newValue < minValue) {
+                newValue = minValue
+            } else if (newValue > maxValue) {
+                newValue = maxValue
+            }
+
+            field = newValue
+            invalidateValue()
+            if (newValue != oldValue) {
+                valueChangeListener?.onValueChanged(this, oldValue, newValue)
+            }
+        }
     val hoverView by lazy { createHoverView() }
     // </editor-fold>
 
@@ -88,11 +111,15 @@ class SwipePicker : LinearLayout {
     private var hoverViewStyle = R.style.XcoRp_Style_SwipePicker_HoverView
 
     private val fontScale: Float
+    private val hoverViewMargin: Float
     private val backgroundViewPosition = IntArray(2)
-    private val hoverViewMargin = resources.getDimensionPixelSize(R.dimen.hoverView_margin).toFloat()
     private val hoverViewLayoutParams by lazy { createHoverViewLayoutParams() }
     private val numberFormat = NumberFormat.getInstance(Locale.US).apply { isGroupingUsed = false }
-    private var hintAnimation: HintAnimation? = null
+    private var hintAnimation: AnimatorSet? = null
+    private var playSound = false
+
+    private var valueChangeListener: OnValueChangeListener? = null
+    private var swipeHandler: OnSwipeHandler = object : OnSwipeHandler {}
 
     constructor(context: Context) : this(context, null)
 
@@ -118,6 +145,7 @@ class SwipePicker : LinearLayout {
         inputEditText.setOnEditorActionListener(::onInputDone)
 
         fontScale = inputEditText.textSize / hintTextView.textSize
+        hoverViewMargin = resources.getDimensionPixelSize(R.dimen.hoverView_margin).toFloat()
     }
 
     // It is required that the background does not hide a hint.
@@ -209,6 +237,21 @@ class SwipePicker : LinearLayout {
 
     fun setInputTextAppearance(resId: Int) = TextViewCompat.setTextAppearance(inputEditText, resId)
 
+    fun setOnValueChangeListener(listener: (value: Float) -> Unit) =
+            setOnValueChangeListener(object : OnValueChangeListener {
+                override fun onValueChanged(view: SwipePicker, oldValue: Float, newValue: Float) {
+                    listener(newValue)
+                }
+            })
+
+    fun setOnValueChangeListener(listener: OnValueChangeListener?) {
+        valueChangeListener = listener
+    }
+
+    fun setOnSwipeHandler(handler: OnSwipeHandler) {
+        swipeHandler = handler
+    }
+
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
         super.onLayout(changed, left, top, right, bottom)
 
@@ -223,9 +266,10 @@ class SwipePicker : LinearLayout {
     }
 
     override fun performClick(): Boolean {
-        super.performClick()
+        if (!super.performClick()) {
+            playSoundEffect(CLICK)
+        }
         isSelected = true
-        playSoundEffect(CLICK)
         return true
     }
 
@@ -233,7 +277,9 @@ class SwipePicker : LinearLayout {
         val result = gestureDetector.onTouchEvent(event)
         if (event.action == ACTION_UP || event.action == ACTION_CANCEL) {
             isPressed = false
-            view.playSoundEffect(CLICK)
+            if (playSound) {
+                view.playSoundEffect(CLICK)
+            }
         }
         return result
     }
@@ -241,41 +287,47 @@ class SwipePicker : LinearLayout {
     override fun isActivated() = activated
 
     override fun setActivated(activated: Boolean) {
+        hintAnimation?.removeAllListeners()
         hintAnimation?.cancel()
-        hintAnimation = HintAnimation(hintTextView).setDuration(ANIMATION_DURATION)
 
-        hintAnimation?.let { animation ->
-            if (activated) {
-                animation.to(0f, 1f)
-                animation.addEndListener {
-                    inputEditText.visibility = View.VISIBLE
-                    super.setActivated(activated)
-                }.start()
-            } else {
-                isSelected = false
+        hintAnimation = if (activated) {
+            animateHintTo(0f, 1f).addEndListener {
+                inputEditText.visibility = View.VISIBLE
+                super.setActivated(activated)
+            }
+        } else {
+            isSelected = false
 
-                val scaledHeight = hintTextView.height *
-                        inputEditText.height / hintTextView.height.toFloat()
-                val verticalOffset = (hintTextView.height - scaledHeight) / 2
+            val scaledHeight = hintTextView.height *
+                    inputEditText.height / hintTextView.height.toFloat()
+            val scaledVerticalOffset = (hintTextView.height - scaledHeight) / 2
+            val y = scaledHeight + scaledVerticalOffset + inputEditText.top
 
-                animation.to(scaledHeight + verticalOffset + inputEditText.top, fontScale)
-                animation.addStartListener {
-                    inputEditText.visibility = View.INVISIBLE
-                    super.setActivated(activated)
-                }.start()
+            animateHintTo(y, fontScale).addStartListener {
+                inputEditText.visibility = View.INVISIBLE
+                super.setActivated(activated)
             }
         }
+        hintAnimation?.start()
 
         this.activated = activated
     }
 
+    private fun animateHintTo(y: Float, scale: Float): AnimatorSet {
+        val animatorSet = AnimatorSet()
+        val animMove = ObjectAnimator.ofFloat(hintTextView, "translationY", y)
+        val animScale = ObjectAnimator.ofPropertyValuesHolder(hintTextView,
+                PropertyValuesHolder.ofFloat("scaleX", scale),
+                PropertyValuesHolder.ofFloat("scaleY", scale))
+        animatorSet.playTogether(animMove, animScale)
+        animatorSet.duration = ANIMATION_DURATION
+        return animatorSet
+    }
+
     override fun setSelected(selected: Boolean) {
-        if (!manualInput || isSelected == selected) {
-            return
-        }
+        if (!manualInput || isSelected == selected) return
 
         super.setSelected(selected)
-
         if (!selected) {
             onInputCancel()
         } else if (!isActivated) {
@@ -286,26 +338,6 @@ class SwipePicker : LinearLayout {
             setInputEnabled(selected)
         } else {
             hintAnimation?.addEndListener { setInputEnabled(isSelected) }
-        }
-    }
-
-    override fun setPressed(pressed: Boolean) {
-        if (pressed == isPressed) {
-            return
-        }
-
-        if (pressed && !isActivated) {
-            hintTextView.alpha = 0f
-
-            isActivated = true
-            hintAnimation?.end()
-        }
-
-        super.setPressed(pressed)
-        if (pressed) {
-            showHoverView()
-        } else {
-            hideHoverView()
         }
     }
 
@@ -328,7 +360,7 @@ class SwipePicker : LinearLayout {
 
     private fun onInputCancel(): Boolean {
         if (isSelected) {
-            inputEditText.setText(numberFormat.format(value))
+            invalidateValue()
             isSelected = false
             return true
         }
@@ -343,6 +375,23 @@ class SwipePicker : LinearLayout {
             return true
         }
         return false
+    }
+
+    override fun setPressed(pressed: Boolean) {
+        if (pressed == isPressed) return
+
+        if (pressed && !isActivated) {
+            hintTextView.alpha = 0f
+            isActivated = true
+            hintAnimation?.end()
+        }
+
+        super.setPressed(pressed)
+        if (pressed) {
+            showHoverView()
+        } else {
+            hideHoverView()
+        }
     }
 
     private fun showHoverView() {
@@ -382,33 +431,6 @@ class SwipePicker : LinearLayout {
                 hoverView.measuredHeight - hoverViewMargin
     }
 
-    /**
-     * Return position on scale array. For example: value 2.5, scale {1, 2, 3, 4, 5}
-     * return 1.5 (not exact because there is not exist in array)
-     *
-     * @param scale scale array in ascending order
-     * @param value sought value
-     * @return position in the scale array (not exact if there is not exist in array)
-     */
-    private fun getPositionOnScale(scale: List<Float>, value: Float): Float {
-        if (value > scale.last()) {
-            return scale.size - 0.5f
-        } else if (value == scale.last()) {
-            return scale.size - 1f
-        }
-
-        for (i in scale.indices) {
-            if (value < scale[i]) {
-                return i - 0.5f
-            } else if (value == scale[i]) {
-                return i.toFloat()
-            }
-        }
-
-        throw IllegalStateException("Could not determine position " +
-                "for value=$value in scale values array $scale.")
-    }
-
     private fun invalidateValue() {
         inputEditText.setText(numberFormat.format(value))
         if (isPressed) {
@@ -417,24 +439,55 @@ class SwipePicker : LinearLayout {
         }
     }
 
+    interface OnValueChangeListener {
+
+        /**
+         * The listener is called every time the value changes.
+         *
+         * @param view SwipePicker of initiating event.
+         * @param oldValue Old value.
+         * @param newValue New value.
+         */
+        fun onValueChanged(view: SwipePicker, oldValue: Float, newValue: Float)
+    }
+
+    interface OnSwipeHandler {
+
+        /**
+         * The handler is called when the gesture occurs and
+         * is intended to change the algorithm for calculating the value.
+         *
+         * @param view SwipePicker of initiating event.
+         * @param initialValue Initial value at the moment of gesture start.
+         * @param initialPosition Initial position in the
+         * scale array at the moment of gesture start. Maybe not exactly if value
+         * is not exist in array or {@code null} if scale values does not exist.
+         * @param division The number of divisions that have moved since the start of gesture.
+         * @return The calculated value after the gesture processing which must be set to the view.
+         */
+        fun onSwipe(view: SwipePicker, initialValue: Float,
+                    initialPosition: Float?, division: Int): Float = with(view) {
+            return value
+        }
+    }
+
     private inner class GestureListener : GestureDetector.SimpleOnGestureListener() {
 
         private val swipeThreshold = resources.displayMetrics.density * 25f
 
-        private var isShowPress = false // used to eliminate flicker
-        private var initialValue: Float = 0f
+        private var isShowPress = false
         private var previousDivision: Int = 0
 
+        private lateinit var initialValue: Lazy<Float>
         private lateinit var initialPosition: Lazy<Float?>
 
         override fun onDown(event: MotionEvent): Boolean {
+            playSound = true
             isShowPress = false
-            initialValue = value
             previousDivision = 0
 
-            initialPosition = lazy {
-                scale?.let { getPositionOnScale(it, value) }
-            }
+            initialValue = lazy { value }
+            initialPosition = lazy { getPositionOnScale(value) }
 
             return true
         }
@@ -447,8 +500,9 @@ class SwipePicker : LinearLayout {
         override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
             if (!isShowPress) {
                 isSelected = true
+                return true
             }
-            return true
+            return false
         }
 
         override fun onDoubleTap(e: MotionEvent): Boolean {
@@ -461,14 +515,61 @@ class SwipePicker : LinearLayout {
 
         override fun onScroll(e1: MotionEvent, e2: MotionEvent, distanceX: Float, distanceY: Float): Boolean {
             val division = Math.round((e2.x - e1.x) / swipeThreshold)
-            if (!isShowPress && previousDivision != division) {
-                onShowPress(e2) // needed because onShowPress is not always called
+
+            if (previousDivision != division) {
+                if (!isShowPress) onShowPress(e2) // needed because onShowPress is not always called
+                value = swipeHandler.onSwipe(this@SwipePicker,
+                        initialValue.value, initialPosition.value, division)
             }
 
-
-
             previousDivision = division
-            return true
+            playSound = isShowPress
+
+            return isShowPress
         }
+
+        /**
+         * Return position in scale array. For example: value 2.5, scale {1, 2, 3, 4, 5}
+         * return 1.5 (not exact because value is not exist in array).
+         *
+         * @param value Sought value.
+         * @return Position in the scale array or {@code null} if scale does not exist.
+         */
+        private fun getPositionOnScale(value: Float): Float? = scale?.let {
+            if (value > it.last()) {
+                return it.size - 0.5f
+            } else if (value == it.last()) {
+                return it.size - 1f
+            }
+
+            for (i in it.indices) {
+                if (value < it[i]) {
+                    return i - 0.5f
+                } else if (value == it[i]) {
+                    return i.toFloat()
+                }
+            }
+
+            throw IllegalStateException("Could not determine position " +
+                    "for value=$value in scale values array $scale.")
+        }
+    }
+
+    private fun AnimatorSet.addStartListener(listener: () -> Unit): AnimatorSet {
+        addListener(object : AnimatorListenerAdapter() {
+            override fun onAnimationStart(animation: Animator?) {
+                listener()
+            }
+        })
+        return this
+    }
+
+    private fun AnimatorSet.addEndListener(listener: () -> Unit): AnimatorSet {
+        addListener(object : AnimatorListenerAdapter() {
+            override fun onAnimationEnd(animation: Animator?) {
+                listener()
+            }
+        })
+        return this
     }
 }
