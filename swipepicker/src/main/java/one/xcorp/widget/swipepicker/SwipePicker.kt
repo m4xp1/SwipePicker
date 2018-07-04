@@ -261,10 +261,10 @@ class SwipePicker : LinearLayout {
         valueChangeListener = listener
     }
 
-    fun setOnSwipeHandler(handler: (initialValue: Float, division: Int) -> Float) =
+    fun setOnSwipeHandler(handler: (value: Float, division: Int) -> Float) =
             setOnSwipeHandler(object : OnSwipeHandler {
-                override fun onSwipe(view: SwipePicker, initialValue: Float, division: Int): Float {
-                    return handler(initialValue, division)
+                override fun onSwipe(view: SwipePicker, value: Float, division: Int): Float {
+                    return handler(value, division)
                 }
             })
 
@@ -491,18 +491,18 @@ class SwipePicker : LinearLayout {
          * is intended to change the algorithm for calculating the value.
          *
          * @param view SwipePicker of initiating event.
-         * @param initialValue Initial value at the moment of gesture start.
-         * @param division The number of divisions that have moved since the start of gesture.
+         * @param value The value from which need moved.
+         * @param division The number of divisions that have moved.
          * @return The calculated value after the gesture processing which must be set to the view.
          */
-        fun onSwipe(view: SwipePicker, initialValue: Float, division: Int): Float = with(view) {
+        fun onSwipe(view: SwipePicker, value: Float, division: Int): Float = with(view) {
             val scale = view.scale
 
-            if (division == 0) return initialValue
+            if (division == 0) return value
             if (scale == null
-                    || (initialValue < scale.first() && division < 0)
-                    || (initialValue > scale.last() && division > 0)) {
-                return initialValue + (division * step)
+                    || (value < scale.first() && division < 0)
+                    || (value > scale.last() && division > 0)) {
+                return value + (division * step)
             }
 
 
