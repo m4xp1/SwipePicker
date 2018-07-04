@@ -64,9 +64,10 @@ class SwipePicker : LinearLayout {
     var scale: List<Float>? = null
         set(value) {
             value?.let {
-                val isAscending = !it.isEmpty() && it.windowed(2).all { (a, b) -> a < b }
-                if (!isAscending) throw IllegalArgumentException("Invalid values scale format. " +
-                        "An array must have one or more elements in ascending order.")
+                val isAscending = it.windowed(2).all { (a, b) -> a < b }
+                if (it.isEmpty() || !isAscending)
+                    throw IllegalArgumentException("Invalid values scale format. " +
+                            "An array must have one or more elements in ascending order.")
             }
             field = value?.toList()
         }
