@@ -29,6 +29,7 @@ class SwipePicker : LinearLayout {
 
     companion object {
         private const val ANIMATION_DURATION = 200L
+        private const val DELAY_SHOW_PRESS = 200
     }
 
     // <editor-fold desc="Properties">
@@ -114,10 +115,9 @@ class SwipePicker : LinearLayout {
     private val hoverViewMargin: Float
     private val backgroundViewPosition = IntArray(2)
     private val hoverViewLayoutParams by lazy { createHoverViewLayoutParams() }
-    private val numberFormat = NumberFormat.getInstance(Locale.US).apply { isGroupingUsed = false }
     private var hintAnimation: AnimatorSet? = null
-    private var playSound = false
 
+    private val numberFormat = NumberFormat.getInstance(Locale.US).apply { isGroupingUsed = false }
     private var valueChangeListener: OnValueChangeListener? = null
     private var swipeHandler: OnSwipeHandler = object : OnSwipeHandler {}
 
@@ -276,10 +276,9 @@ class SwipePicker : LinearLayout {
     private fun onTouch(view: View, event: MotionEvent): Boolean {
         val result = gestureDetector.onTouchEvent(event)
         if (event.action == ACTION_UP || event.action == ACTION_CANCEL) {
+            handler.removeCallbacksAndMessages(gestureDetector)
             isPressed = false
-            if (playSound) {
-                view.playSoundEffect(CLICK)
-            }
+            view.playSoundEffect(CLICK)
         }
         return result
     }
@@ -459,40 +458,49 @@ class SwipePicker : LinearLayout {
          *
          * @param view SwipePicker of initiating event.
          * @param initialValue Initial value at the moment of gesture start.
-         * @param initialPosition Initial position in the
-         * scale array at the moment of gesture start. Maybe not exactly if value
-         * is not exist in array or {@code null} if scale values does not exist.
          * @param division The number of divisions that have moved since the start of gesture.
          * @return The calculated value after the gesture processing which must be set to the view.
          */
-        fun onSwipe(view: SwipePicker, initialValue: Float,
-                    initialPosition: Float?, division: Int): Float = with(view) {
+        fun onSwipe(view: SwipePicker, initialValue: Float, division: Int): Float = with(view) {
+            val scale = view.scale
+
+            if (division == 0) return initialValue
+            if (scale == null
+                    || (initialValue < scale.first() && division < 0)
+                    || (initialValue > scale.last() && division > 0)) {
+                return initialValue + (division * step)
+            }
+
+
+
             return value
         }
     }
 
     private inner class GestureListener : GestureDetector.SimpleOnGestureListener() {
 
-        private val swipeThreshold = resources.displayMetrics.density * 25f
+        private val swipeThreshold = resources.displayMetrics.density * 15f
 
         private var isShowPress = false
-        private var previousDivision: Int = 0
 
-        private lateinit var initialValue: Lazy<Float>
-        private lateinit var initialPosition: Lazy<Float?>
+        private var initialValue = 0f
+        private var previousDivision = 0
 
         override fun onDown(event: MotionEvent): Boolean {
-            playSound = true
             isShowPress = false
+
+            initialValue = value
             previousDivision = 0
 
-            initialValue = lazy { value }
-            initialPosition = lazy { getPositionOnScale(value) }
+            handler.postAtTime(::onShowPress,
+                    gestureDetector, event.downTime + DELAY_SHOW_PRESS)
 
             return true
         }
 
-        override fun onShowPress(e: MotionEvent) {
+        // Use it because SimpleOnGestureListener#onShowPress(MotionEvent e)
+        // causes flicker and wrong behavior.
+        fun onShowPress() {
             isPressed = true
             isShowPress = true
         }
@@ -517,41 +525,12 @@ class SwipePicker : LinearLayout {
             val division = Math.round((e2.x - e1.x) / swipeThreshold)
 
             if (previousDivision != division) {
-                if (!isShowPress) onShowPress(e2) // needed because onShowPress is not always called
-                value = swipeHandler.onSwipe(this@SwipePicker,
-                        initialValue.value, initialPosition.value, division)
+                if (!isPressed) onShowPress()
+                value = swipeHandler.onSwipe(this@SwipePicker, initialValue, division)
             }
 
             previousDivision = division
-            playSound = isShowPress
-
-            return isShowPress
-        }
-
-        /**
-         * Return position in scale array. For example: value 2.5, scale {1, 2, 3, 4, 5}
-         * return 1.5 (not exact because value is not exist in array).
-         *
-         * @param value Sought value.
-         * @return Position in the scale array or {@code null} if scale does not exist.
-         */
-        private fun getPositionOnScale(value: Float): Float? = scale?.let {
-            if (value > it.last()) {
-                return it.size - 0.5f
-            } else if (value == it.last()) {
-                return it.size - 1f
-            }
-
-            for (i in it.indices) {
-                if (value < it[i]) {
-                    return i - 0.5f
-                } else if (value == it[i]) {
-                    return i.toFloat()
-                }
-            }
-
-            throw IllegalStateException("Could not determine position " +
-                    "for value=$value in scale values array $scale.")
+            return isPressed
         }
     }
 
