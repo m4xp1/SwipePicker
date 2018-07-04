@@ -119,8 +119,9 @@ class SwipePicker : LinearLayout {
     private var hintAnimation: AnimatorSet? = null
 
     private val numberFormat = NumberFormat.getInstance(Locale.US).apply { isGroupingUsed = false }
+    private var stateChangeListener: OnStateChangeListener? = null
     private var valueChangeListener: OnValueChangeListener? = null
-    private var swipeHandler: OnSwipeHandler = object : OnSwipeHandler {}
+    private var swipeHandler: OnSwipeHandler? = object : OnSwipeHandler {}
 
     constructor(context: Context) : this(context, null)
 
@@ -238,6 +239,17 @@ class SwipePicker : LinearLayout {
 
     fun setInputTextAppearance(resId: Int) = TextViewCompat.setTextAppearance(inputEditText, resId)
 
+    fun setOnStateChangeListener(listener: (isActivated: Boolean) -> Unit) =
+            setOnStateChangeListener(object : OnStateChangeListener {
+                override fun onStateChanged(view: SwipePicker, isActivated: Boolean) {
+                    listener(isActivated)
+                }
+            })
+
+    fun setOnStateChangeListener(listener: OnStateChangeListener?) {
+        stateChangeListener = listener
+    }
+
     fun setOnValueChangeListener(listener: (value: Float) -> Unit) =
             setOnValueChangeListener(object : OnValueChangeListener {
                 override fun onValueChanged(view: SwipePicker, oldValue: Float, newValue: Float) {
@@ -249,7 +261,14 @@ class SwipePicker : LinearLayout {
         valueChangeListener = listener
     }
 
-    fun setOnSwipeHandler(handler: OnSwipeHandler) {
+    fun setOnSwipeHandler(handler: (initialValue: Float, division: Int) -> Float) =
+            setOnSwipeHandler(object : OnSwipeHandler {
+                override fun onSwipe(view: SwipePicker, initialValue: Float, division: Int): Float {
+                    return handler(initialValue, division)
+                }
+            })
+
+    fun setOnSwipeHandler(handler: OnSwipeHandler?) {
         swipeHandler = handler
     }
 
@@ -310,7 +329,10 @@ class SwipePicker : LinearLayout {
         }
         hintAnimation?.start()
 
-        this.activated = activated
+        if (this.activated != activated) {
+            this.activated = activated
+            stateChangeListener?.onStateChanged(this, activated)
+        }
     }
 
     private fun animateHintTo(y: Float, scale: Float): AnimatorSet {
@@ -439,6 +461,17 @@ class SwipePicker : LinearLayout {
         }
     }
 
+    interface OnStateChangeListener {
+
+        /**
+         * The listener is called every time the activate state changes.
+         *
+         * @param view SwipePicker of initiating event.
+         * @param isActivated Current activated state.
+         */
+        fun onStateChanged(view: SwipePicker, isActivated: Boolean)
+    }
+
     interface OnValueChangeListener {
 
         /**
@@ -527,7 +560,9 @@ class SwipePicker : LinearLayout {
 
             if (previousDivision != division) {
                 if (!isPressed) onShowPress()
-                value = swipeHandler.onSwipe(this@SwipePicker, initialValue, division)
+                swipeHandler?.let {
+                    value = it.onSwipe(this@SwipePicker, initialValue, division)
+                }
             }
 
             previousDivision = division
