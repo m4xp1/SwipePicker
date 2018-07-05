@@ -602,7 +602,7 @@ class SwipePicker : LinearLayout {
 
     private inner class GestureListener : GestureDetector.SimpleOnGestureListener() {
 
-        private val swipeThreshold = resources.displayMetrics.density * 15f
+        private val swipeThreshold = resources.getDimensionPixelSize(R.dimen.swipePicker_swipeThreshold)
 
         private var isShowPress = false
 
