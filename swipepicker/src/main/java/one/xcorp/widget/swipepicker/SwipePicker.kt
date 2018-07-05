@@ -33,7 +33,7 @@ class SwipePicker : LinearLayout {
     }
 
     // <editor-fold desc="Properties">
-    var hint: CharSequence
+    var hint: CharSequence?
         get() = hintTextView.text
         set(value) {
             hintTextView.text = value
