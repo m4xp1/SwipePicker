@@ -12,11 +12,7 @@
         <attr name="inputBackground" format="color|reference" />
         <attr name="allowDeactivate" format="boolean" />
         <attr name="manualInput" format="boolean" />
-        <attr name="inputType">
-            <flag name="number" value="0x00000002" />
-            <flag name="numberSigned" value="0x00001002" />
-            <flag name="numberDecimal" value="0x00002002" />
-        </attr>
+        <attr name="android:inputType" />
         <attr name="scale" format="reference" />
         <attr name="minValue" format="float" />
         <attr name="maxValue" format="float" />

@@ -11,7 +11,6 @@ import android.support.v4.widget.TextViewCompat
 import android.support.v7.widget.AppCompatTextView
 import android.text.InputFilter
 import android.text.InputType
-import android.text.InputType.*
 import android.util.AttributeSet
 import android.view.*
 import android.view.MotionEvent.ACTION_CANCEL
@@ -44,41 +43,31 @@ class SwipePicker : LinearLayout {
     var allowDeactivate = true
     var manualInput = true
         set(enable) {
-            if (!enable) {
-                isSelected = false
-            }
+            if (!enable) isSelected = false
             field = enable
         }
     var inputType: Int
         get() = inputEditText.inputType
         set(value) {
-            when (value) {
-                TYPE_CLASS_NUMBER or TYPE_NUMBER_FLAG_SIGNED or TYPE_NUMBER_FLAG_DECIMAL,
-                TYPE_CLASS_NUMBER or TYPE_NUMBER_FLAG_DECIMAL,
-                TYPE_CLASS_NUMBER or TYPE_NUMBER_FLAG_SIGNED,
-                TYPE_CLASS_NUMBER -> inputEditText.inputType = value
-                else -> throw IllegalArgumentException("Only TYPE_CLASS_NUMBER with " +
-                        "TYPE_NUMBER_FLAG_SIGNED or TYPE_NUMBER_FLAG_DECIMAL are allowed here.")
-            }
+            inputEditText.inputType = value
         }
     var scale: List<Float>? = null
         set(value) {
             value?.let {
-                val isAscending = it.windowed(2).all { (a, b) -> a < b }
-                if (it.isEmpty() || !isAscending)
+                if (it.isEmpty() || !it.windowed(2).all { (a, b) -> a < b })
                     throw IllegalArgumentException("Invalid values scale format. " +
                             "An array must have one or more elements in ascending order.")
             }
             field = value?.toList()
         }
     var minValue = -Float.MAX_VALUE
-        set(_value) {
-            field = _value
+        set(min) {
+            field = min
             value = value // check value restriction
         }
     var maxValue = Float.MAX_VALUE
-        set(_value) {
-            field = _value
+        set(max) {
+            field = max
             value = value // check value restriction
         }
     var step = 1f
@@ -95,6 +84,7 @@ class SwipePicker : LinearLayout {
 
             field = newValue
             invalidateValue()
+
             if (newValue != oldValue) {
                 valueChangeListener?.onValueChanged(this, oldValue, newValue)
             }
@@ -114,11 +104,12 @@ class SwipePicker : LinearLayout {
 
     private val fontScale: Float
     private val hoverViewMargin: Float
+    private val numberFormat = NumberFormat.getInstance(Locale.US).apply { isGroupingUsed = false }
     private val backgroundViewPosition = IntArray(2)
     private val hoverViewLayoutParams by lazy { createHoverViewLayoutParams() }
     private var hintAnimation: AnimatorSet? = null
 
-    private val numberFormat = NumberFormat.getInstance(Locale.US).apply { isGroupingUsed = false }
+    private var valueTransformer: ValueTransformer = object : ValueTransformer {}
     private var stateChangeListener: OnStateChangeListener? = null
     private var valueChangeListener: OnValueChangeListener? = null
     private var swipeHandler: OnSwipeHandler = object : OnSwipeHandler {}
@@ -189,7 +180,7 @@ class SwipePicker : LinearLayout {
                 .getBoolean(R.styleable.SwipePicker_allowDeactivate, allowDeactivate)
         manualInput = typedArray.getBoolean(R.styleable.SwipePicker_manualInput, manualInput)
         inputType = typedArray.getInt(
-                R.styleable.SwipePicker_inputType, InputType.TYPE_CLASS_NUMBER)
+                R.styleable.SwipePicker_android_inputType, InputType.TYPE_CLASS_NUMBER)
         scale = typedArray.getFloatArray(R.styleable.SwipePicker_scale)?.toList()
         minValue = typedArray.getFloat(R.styleable.SwipePicker_minValue, minValue)
         maxValue = typedArray.getFloat(R.styleable.SwipePicker_maxValue, maxValue)
@@ -238,6 +229,20 @@ class SwipePicker : LinearLayout {
     fun setHintTextAppearance(resId: Int) = TextViewCompat.setTextAppearance(hintTextView, resId)
 
     fun setInputTextAppearance(resId: Int) = TextViewCompat.setTextAppearance(inputEditText, resId)
+
+    fun setValue(value: CharSequence): Boolean {
+        val result = valueTransformer.transform(this, value.toString())
+        if (result != null) {
+            this.value = result
+            return true
+        }
+        return false
+    }
+
+    fun setValueTransformer(transformer: ValueTransformer) {
+        valueTransformer = transformer
+        invalidateValue()
+    }
 
     fun setOnStateChangeListener(listener: (isActivated: Boolean) -> Unit) =
             setOnStateChangeListener(object : OnStateChangeListener {
@@ -351,7 +356,7 @@ class SwipePicker : LinearLayout {
 
         super.setSelected(selected)
         if (!selected) {
-            onInputCancel()
+            cancelInput()
         } else if (!isActivated) {
             isActivated = true
         }
@@ -380,10 +385,14 @@ class SwipePicker : LinearLayout {
         }
     }
 
+    private fun cancelInput() {
+        invalidateValue()
+        isSelected = false
+    }
+
     private fun onInputCancel(): Boolean {
         if (isSelected) {
-            invalidateValue()
-            isSelected = false
+            cancelInput()
             return true
         }
         return false
@@ -391,9 +400,14 @@ class SwipePicker : LinearLayout {
 
     private fun onInputDone(view: TextView, actionId: Int, event: KeyEvent?): Boolean {
         if (actionId == EditorInfo.IME_ACTION_DONE || event?.keyCode == KeyEvent.KEYCODE_ENTER) {
-            value = view.text.toString().toFloatOrNull() ?: value
-            isSelected = false
             playSoundEffect(CLICK)
+            val result = valueTransformer.transform(this, view.text.toString())
+            if (result == null) {
+                inputEditText.selectAll()
+            } else {
+                value = result
+                isSelected = false
+            }
             return true
         }
         return false
@@ -454,10 +468,36 @@ class SwipePicker : LinearLayout {
     }
 
     private fun invalidateValue() {
-        inputEditText.setText(numberFormat.format(value))
+        inputEditText.setText(valueTransformer.transform(this, value))
         if (isPressed) {
+            // get the value from input to take into account the maximum length
             hoverView.text = inputEditText.text
             invalidateHoverViewPosition()
+        }
+    }
+
+    interface ValueTransformer {
+
+        /**
+         * Transform value from string to float.
+         *
+         * @param value Manual entered value.
+         * @return Converted internal value or {@code null}.
+         * If null then input mode don't disable and value not apply.
+         */
+        fun transform(view: SwipePicker, value: String): Float? {
+            return value.toFloatOrNull() ?: view.value
+        }
+
+        /**
+         * Transform value from float to string.
+         *
+         * @param value Internal value.
+         * @return Converted display value or {@code null}.
+         * If null then set empty value.
+         */
+        fun transform(view: SwipePicker, value: Float): String? {
+            return view.numberFormat.format(value)
         }
     }
 
@@ -581,8 +621,10 @@ class SwipePicker : LinearLayout {
             return true
         }
 
-        // Use it because SimpleOnGestureListener#onShowPress(MotionEvent e)
-        // causes flicker and wrong behavior.
+        /**
+         * Use it because SimpleOnGestureListener#onShowPress(MotionEvent e)
+         * causes flicker and wrong behavior.
+         */
         fun onShowPress() {
             isPressed = true
             isShowPress = true
