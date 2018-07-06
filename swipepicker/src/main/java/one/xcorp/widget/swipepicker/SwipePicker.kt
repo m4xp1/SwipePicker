@@ -38,8 +38,8 @@ class SwipePicker : LinearLayout {
             hintTextView.text = value
         }
     var inputBackground: Drawable
-        get() = backgroundView.background
-        set(value) = ViewCompat.setBackground(backgroundView, value)
+        get() = inputEditText.background
+        set(value) = ViewCompat.setBackground(inputEditText, value)
     var allowDeactivate = true
     var manualInput = true
         set(enable) {
@@ -96,7 +96,7 @@ class SwipePicker : LinearLayout {
     private val gestureDetector: GestureDetectorCompat
 
     private val hintTextView by lazy { findViewById<AppCompatTextView>(android.R.id.hint) }
-    private val backgroundView by lazy { findViewById<View>(android.R.id.background) }
+    private val inputAreaView by lazy { findViewById<View>(android.R.id.inputArea) }
     private val inputEditText by lazy { findViewById<EditText>(android.R.id.input) }
 
     private var activated = false
@@ -105,7 +105,7 @@ class SwipePicker : LinearLayout {
     private val fontScale: Float
     private val hoverViewMargin: Float
     private val numberFormat = NumberFormat.getInstance(Locale.US).apply { isGroupingUsed = false }
-    private val backgroundViewPosition = IntArray(2)
+    private val inputAreaPosition = IntArray(2)
     private val hoverViewLayoutParams by lazy { createHoverViewLayoutParams() }
     private var hintAnimation: AnimatorSet? = null
 
@@ -133,7 +133,7 @@ class SwipePicker : LinearLayout {
         inflate(context, R.layout.swipe_picker, this)
         obtainStyledAttributes(context, attrs, defStyleAttr, defStyleRes)
 
-        backgroundView.setOnTouchListener(::onTouch)
+        inputAreaView.setOnTouchListener(::onTouch)
         inputEditText.setOnBackPressedListener(::onInputCancel)
         inputEditText.setOnEditorActionListener(::onInputDone)
 
@@ -141,7 +141,7 @@ class SwipePicker : LinearLayout {
         hoverViewMargin = resources.getDimensionPixelSize(R.dimen.hoverView_margin).toFloat()
     }
 
-    // It is required that the background does not hide a hint.
+    // It is required that the input area does not hide a hint.
     override fun getChildDrawingOrder(childCount: Int, i: Int) =
             if (i == 0) 1 else if (i == 1) 0 else i
 
@@ -152,7 +152,7 @@ class SwipePicker : LinearLayout {
         width = MATCH_PARENT
         height = MATCH_PARENT
         format = PixelFormat.TRANSLUCENT
-        flags = (FLAG_NOT_FOCUSABLE or FLAG_NOT_TOUCHABLE)
+        flags = (FLAG_LAYOUT_IN_SCREEN or FLAG_NOT_FOCUSABLE or FLAG_NOT_TOUCHABLE)
         type = TYPE_APPLICATION_PANEL
     }
 
@@ -316,10 +316,11 @@ class SwipePicker : LinearLayout {
 
         hintAnimation = if (activated) {
             animateHintTo(0f, 1f).addEndListener {
-                inputEditText.visibility = View.VISIBLE
+                invalidateValue()
                 super.setActivated(activated)
             }
         } else {
+            isPressed = false
             isSelected = false
 
             val scaledHeight = hintTextView.height *
@@ -328,7 +329,7 @@ class SwipePicker : LinearLayout {
             val y = scaledHeight + scaledVerticalOffset + inputEditText.top
 
             animateHintTo(y, fontScale).addStartListener {
-                inputEditText.visibility = View.INVISIBLE
+                disappearValue()
                 super.setActivated(activated)
             }
         }
@@ -376,10 +377,8 @@ class SwipePicker : LinearLayout {
         inputEditText.isEnabled = enabled
         if (enabled) {
             inputEditText.requestFocus()
-            inputEditText.selectAll()
             inputEditText.showKeyboard()
         } else {
-            inputEditText.setSelection(0)
             inputEditText.clearFocus()
             inputEditText.hideKeyBoard()
         }
@@ -459,19 +458,33 @@ class SwipePicker : LinearLayout {
 
     private fun invalidateHoverViewPosition() {
         hoverView.measure(MeasureSpec.EXACTLY, MeasureSpec.EXACTLY)
-        backgroundView.getLocationOnScreen(backgroundViewPosition)
+        inputAreaView.getLocationOnScreen(inputAreaPosition)
 
-        hoverView.x = backgroundViewPosition[0] +
-                backgroundView.width / 2f - hoverView.measuredWidth / 2f
-        hoverView.y = backgroundViewPosition[1] -
+        hoverView.x = inputAreaPosition[0] +
+                inputAreaView.width / 2f - hoverView.measuredWidth / 2f
+        hoverView.y = inputAreaPosition[1] -
                 hoverView.measuredHeight - hoverViewMargin
     }
 
     private fun invalidateValue() {
+        val isSelected = inputEditText.isSelected
         inputEditText.setText(valueTransformer.transform(this, value))
+        if (isSelected) {
+            inputEditText.selectAll()
+        }
+
         if (isPressed) {
             // get the value from input to take into account the maximum length
             hoverView.text = inputEditText.text
+            invalidateHoverViewPosition()
+        }
+    }
+
+    private fun disappearValue() {
+        inputEditText.text = null
+
+        if (isPressed) {
+            hoverView.text = null
             invalidateHoverViewPosition()
         }
     }

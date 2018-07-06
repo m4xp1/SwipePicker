@@ -13,9 +13,11 @@
         android:padding="@dimen/swipePicker_padding" />
 
     <FrameLayout
-        android:id="@android:id/background"
+        android:id="@android:id/inputArea"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:focusable="true"
+        android:focusableInTouchMode="true">
 
         <one.xcorp.widget.swipepicker.EditText
             android:id="@android:id/input"
@@ -29,6 +31,7 @@
             android:includeFontPadding="false"
             android:maxLines="1"
             android:padding="@dimen/swipePicker_padding"
+            android:selectAllOnFocus="true"
             android:textColor="@null" />
     </FrameLayout>
 </merge>
