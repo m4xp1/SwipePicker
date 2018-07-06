@@ -2,8 +2,10 @@ package one.xcorp.widget.swipepicker
 
 import android.animation.*
 import android.content.Context
+import android.content.res.ColorStateList
 import android.content.res.TypedArray
 import android.graphics.PixelFormat
+import android.graphics.PorterDuff
 import android.graphics.drawable.Drawable
 import android.support.v4.view.GestureDetectorCompat
 import android.support.v4.view.ViewCompat
@@ -37,9 +39,15 @@ class SwipePicker : LinearLayout {
         set(value) {
             hintTextView.text = value
         }
-    var inputBackground: Drawable
+    var backgroundInput: Drawable?
         get() = inputEditText.background
         set(value) = ViewCompat.setBackground(inputEditText, value)
+    var backgroundInputTint: ColorStateList?
+        get() = ViewCompat.getBackgroundTintList(inputEditText)
+        set(value) = ViewCompat.setBackgroundTintList(inputEditText, value)
+    var backgroundInputTintMode: PorterDuff.Mode?
+        get() = ViewCompat.getBackgroundTintMode(inputEditText)
+        set(value) = ViewCompat.setBackgroundTintMode(inputEditText, value)
     var allowDeactivate = true
     var manualInput = true
         set(enable) {
@@ -175,7 +183,13 @@ class SwipePicker : LinearLayout {
         setInputTextAppearance(typedArray.getResourceId(
                 R.styleable.SwipePicker_inputTextAppearance,
                 R.style.XcoRp_TextAppearance_SwipePicker_Input))
-        inputBackground = typedArray.getDrawable(R.styleable.SwipePicker_inputBackground)
+        backgroundInput = typedArray.getDrawable(R.styleable.SwipePicker_backgroundInput)
+        if (typedArray.hasValue(R.styleable.SwipePicker_backgroundInputTint)) {
+            backgroundInputTint = typedArray.getColorStateList(R.styleable.SwipePicker_backgroundInputTint)
+        }
+        if (typedArray.hasValue(R.styleable.SwipePicker_backgroundInputTintMode)) {
+            backgroundInputTintMode = typedArray.getTintMode(R.styleable.SwipePicker_backgroundInputTintMode, null)
+        }
         allowDeactivate = typedArray
                 .getBoolean(R.styleable.SwipePicker_allowDeactivate, allowDeactivate)
         manualInput = typedArray.getBoolean(R.styleable.SwipePicker_manualInput, manualInput)
@@ -204,7 +218,7 @@ class SwipePicker : LinearLayout {
     private fun TypedArray.getFloatArray(index: Int): FloatArray? {
         var typedArray: TypedArray? = null
         return try {
-            typedArray = resources.obtainTypedArray(getResourceId(index, 0))
+            typedArray = resources.obtainTypedArray(getResourceId(index, -1))
 
             val result = FloatArray(typedArray.length())
             for (i in 0 until typedArray.length()) {
@@ -215,6 +229,19 @@ class SwipePicker : LinearLayout {
             null
         } finally {
             typedArray?.recycle()
+        }
+    }
+
+    private fun TypedArray.getTintMode(resId: Int, default: PorterDuff.Mode?): PorterDuff.Mode? {
+        val mode = getInt(resId, -1)
+        return when (mode) {
+            3 -> PorterDuff.Mode.SRC_OVER
+            5 -> PorterDuff.Mode.SRC_IN
+            9 -> PorterDuff.Mode.SRC_ATOP
+            14 -> PorterDuff.Mode.MULTIPLY
+            15 -> PorterDuff.Mode.SCREEN
+            16 -> PorterDuff.Mode.ADD
+            else -> default
         }
     }
 

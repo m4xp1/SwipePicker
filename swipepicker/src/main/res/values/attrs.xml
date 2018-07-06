@@ -9,7 +9,16 @@
         <attr name="android:state_activated" />
         <attr name="hintTextAppearance" format="reference" />
         <attr name="inputTextAppearance" format="reference" />
-        <attr name="inputBackground" format="color|reference" />
+        <attr name="backgroundInput" format="color|reference" />
+        <attr name="backgroundInputTint" format="color" />
+        <attr name="backgroundInputTintMode">
+            <enum name="src_over" value="3" />
+            <enum name="src_in" value="5" />
+            <enum name="src_atop" value="9" />
+            <enum name="multiply" value="14" />
+            <enum name="screen" value="15" />
+            <enum name="add" value="16" />
+        </attr>
         <attr name="allowDeactivate" format="boolean" />
         <attr name="manualInput" format="boolean" />
         <attr name="android:inputType" />
