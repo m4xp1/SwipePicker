@@ -4,7 +4,7 @@
         <item name="android:minWidth">@dimen/swipePicker_minWidth</item>
         <item name="hintTextAppearance">@style/XcoRp.TextAppearance.SwipePicker.Hint</item>
         <item name="inputTextAppearance">@style/XcoRp.TextAppearance.SwipePicker.Input</item>
-        <item name="inputBackground">@drawable/bg_swipe_picker</item>
+        <item name="inputBackground">@drawable/bg_input_swipe_picker</item>
         <item name="hoverViewStyle">@style/XcoRp.Style.SwipePicker.HoverView</item>
     </style>
 
@@ -13,11 +13,11 @@
     </style>
 
     <style name="XcoRp.TextAppearance.SwipePicker.Hint">
-        <item name="android:textColor">@color/hint_swipe_picker</item>
+        <item name="android:textColor">@color/text_hint_swipe_picker</item>
     </style>
 
     <style name="XcoRp.TextAppearance.SwipePicker.Input">
-        <item name="android:textColor">@color/input_swipe_picker</item>
+        <item name="android:textColor">@color/text_input_swipe_picker</item>
     </style>
 
     <style name="XcoRp.Style.SwipePicker.HoverView" parent="">

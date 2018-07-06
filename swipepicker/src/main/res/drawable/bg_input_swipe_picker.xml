@@ -5,7 +5,7 @@
             <stroke
                 android:width="@dimen/swipePicker_strokeWidth"
                 android:color="@color/swipePicker_primary" />
-            <solid android:color="@color/swipePicker_background" />
+            <solid android:color="@android:color/transparent" />
             <corners android:radius="@dimen/swipePicker_radiusCorner" />
         </shape>
     </item>
@@ -14,7 +14,7 @@
             <stroke
                 android:width="@dimen/swipePicker_strokeWidth"
                 android:color="@color/swipePicker_primary" />
-            <solid android:color="@color/swipePicker_background" />
+            <solid android:color="@android:color/transparent" />
             <corners android:radius="@dimen/swipePicker_radiusCorner" />
         </shape>
     </item>
@@ -34,7 +34,7 @@
                 android:color="@color/swipePicker_primary"
                 android:dashGap="@dimen/swipePicker_dashGap"
                 android:dashWidth="@dimen/swipePicker_dashWidth" />
-            <solid android:color="@color/swipePicker_background" />
+            <solid android:color="@android:color/transparent" />
             <corners android:radius="@dimen/swipePicker_radiusCorner" />
         </shape>
     </item>

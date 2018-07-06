@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Before 21 api theme attributes not supported in drawable.
-         Use aapt override for change it. -->
-    <color name="swipePicker_background">#ffffffff</color>
+    <!-- Before 21 api theme attributes not supported in drawable. Use aapt
+    override for change it. After 21 api wrong behaviour in text color selector. -->
     <color name="swipePicker_primary">#ff3f51b5</color>
     <color name="swipePicker_accent">#ffff4081</color>
     <color name="swipePicker_text">#dd000000</color>
