@@ -39,6 +39,12 @@ class SwipePicker : LinearLayout {
         set(value) {
             hintTextView.text = value
         }
+    var hintTextColor: ColorStateList
+        get() = hintTextView.textColors
+        set(value) = hintTextView.setTextColor(value)
+    var inputTextColor: ColorStateList
+        get() = inputEditText.textColors
+        set(value) = inputEditText.setTextColor(value)
     var backgroundInput: Drawable?
         get() = inputEditText.background
         set(value) = ViewCompat.setBackground(inputEditText, value)
@@ -253,7 +259,11 @@ class SwipePicker : LinearLayout {
         inputEditText.filters = filters.toTypedArray()
     }
 
+    fun setHintTextColor(color: Int) = hintTextView.setTextColor(color)
+
     fun setHintTextAppearance(resId: Int) = TextViewCompat.setTextAppearance(hintTextView, resId)
+
+    fun setInputTextColor(color: Int) = inputEditText.setTextColor(color)
 
     fun setInputTextAppearance(resId: Int) = TextViewCompat.setTextAppearance(inputEditText, resId)
 
