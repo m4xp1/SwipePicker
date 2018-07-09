@@ -5,8 +5,8 @@
     <declare-styleable name="SwipePicker">
         <attr name="android:minWidth" />
         <attr name="android:hint" />
-        <attr name="android:maxLength" />
         <attr name="android:state_activated" />
+        <attr name="allowDeactivate" format="boolean" />
         <attr name="hintTextAppearance" format="reference" />
         <attr name="inputTextAppearance" format="reference" />
         <attr name="backgroundInput" format="color|reference" />
@@ -19,9 +19,10 @@
             <enum name="screen" value="15" />
             <enum name="add" value="16" />
         </attr>
-        <attr name="allowDeactivate" format="boolean" />
         <attr name="manualInput" format="boolean" />
+        <attr name="android:maxLength" />
         <attr name="android:inputType" />
+        <attr name="android:digits" />
         <attr name="scale" format="reference" />
         <attr name="minValue" format="float" />
         <attr name="maxValue" format="float" />

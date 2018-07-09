@@ -13,6 +13,8 @@ import android.support.v4.widget.TextViewCompat
 import android.support.v7.widget.AppCompatTextView
 import android.text.InputFilter
 import android.text.InputType
+import android.text.method.DigitsKeyListener
+import android.text.method.KeyListener
 import android.util.AttributeSet
 import android.view.*
 import android.view.MotionEvent.ACTION_CANCEL
@@ -39,6 +41,7 @@ class SwipePicker : LinearLayout {
         set(value) {
             hintTextView.text = value
         }
+    var allowDeactivate = true
     var hintTextColor: ColorStateList
         get() = hintTextView.textColors
         set(value) = hintTextView.setTextColor(value)
@@ -54,16 +57,25 @@ class SwipePicker : LinearLayout {
     var backgroundInputTintMode: PorterDuff.Mode?
         get() = ViewCompat.getBackgroundTintMode(inputEditText)
         set(value) = ViewCompat.setBackgroundTintMode(inputEditText, value)
-    var allowDeactivate = true
     var manualInput = true
         set(enable) {
             if (!enable) isSelected = false
             field = enable
         }
+    var inputFilters: Array<InputFilter>
+        get() = inputEditText.filters
+        set(value) {
+            inputEditText.filters = value
+        }
     var inputType: Int
         get() = inputEditText.inputType
         set(value) {
             inputEditText.inputType = value
+        }
+    var keyListener: KeyListener?
+        get() = inputEditText.keyListener
+        set(value) {
+            inputEditText.keyListener = value
         }
     var scale: List<Float>? = null
         set(value) {
@@ -114,13 +126,12 @@ class SwipePicker : LinearLayout {
     private val inputEditText by lazy { findViewById<EditText>(android.R.id.input) }
 
     private var activated = false
-    private var hoverViewStyle = R.style.XcoRp_Style_SwipePicker_HoverView
-
     private val fontScale: Float
-    private val hoverViewMargin: Float
-    private val numberFormat = NumberFormat.getInstance(Locale.US).apply { isGroupingUsed = false }
     private val inputAreaPosition = IntArray(2)
+    private val hoverViewMargin: Float
+    private var hoverViewStyle = R.style.XcoRp_Style_SwipePicker_HoverView
     private val hoverViewLayoutParams by lazy { createHoverViewLayoutParams() }
+    private val numberFormat = NumberFormat.getInstance(Locale.US).apply { isGroupingUsed = false }
     private var hintAnimation: AnimatorSet? = null
 
     private var valueTransformer: ValueTransformer = object : ValueTransformer {}
@@ -179,10 +190,10 @@ class SwipePicker : LinearLayout {
                 R.styleable.SwipePicker_android_minWidth,
                 resources.getDimensionPixelSize(R.dimen.swipePicker_minWidth))
         hint = typedArray.getString(R.styleable.SwipePicker_android_hint)
-        setMaxLength(typedArray.getInt(R.styleable.SwipePicker_android_maxLength,
-                resources.getInteger(R.integer.swipePicker_maxLength)))
         activated = typedArray.getBoolean(
                 R.styleable.SwipePicker_android_state_activated, activated)
+        allowDeactivate = typedArray
+                .getBoolean(R.styleable.SwipePicker_allowDeactivate, allowDeactivate)
         setHintTextAppearance(typedArray.getResourceId(
                 R.styleable.SwipePicker_hintTextAppearance,
                 R.style.XcoRp_TextAppearance_SwipePicker_Hint))
@@ -191,16 +202,22 @@ class SwipePicker : LinearLayout {
                 R.style.XcoRp_TextAppearance_SwipePicker_Input))
         backgroundInput = typedArray.getDrawable(R.styleable.SwipePicker_backgroundInput)
         if (typedArray.hasValue(R.styleable.SwipePicker_backgroundInputTint)) {
-            backgroundInputTint = typedArray.getColorStateList(R.styleable.SwipePicker_backgroundInputTint)
+            backgroundInputTint = typedArray
+                    .getColorStateList(R.styleable.SwipePicker_backgroundInputTint)
         }
         if (typedArray.hasValue(R.styleable.SwipePicker_backgroundInputTintMode)) {
-            backgroundInputTintMode = typedArray.getTintMode(R.styleable.SwipePicker_backgroundInputTintMode, null)
+            backgroundInputTintMode = typedArray
+                    .getTintMode(R.styleable.SwipePicker_backgroundInputTintMode, null)
         }
-        allowDeactivate = typedArray
-                .getBoolean(R.styleable.SwipePicker_allowDeactivate, allowDeactivate)
         manualInput = typedArray.getBoolean(R.styleable.SwipePicker_manualInput, manualInput)
+        setMaxLength(typedArray.getInt(R.styleable.SwipePicker_android_maxLength,
+                resources.getInteger(R.integer.swipePicker_maxLength)))
         inputType = typedArray.getInt(
                 R.styleable.SwipePicker_android_inputType, InputType.TYPE_CLASS_NUMBER)
+        if (typedArray.hasValue(R.styleable.SwipePicker_android_digits)) {
+            keyListener = DigitsKeyListener
+                    .getInstance(typedArray.getString(R.styleable.SwipePicker_android_digits))
+        }
         scale = typedArray.getFloatArray(R.styleable.SwipePicker_scale)?.toList()
         minValue = typedArray.getFloat(R.styleable.SwipePicker_minValue, minValue)
         maxValue = typedArray.getFloat(R.styleable.SwipePicker_maxValue, maxValue)
@@ -251,12 +268,12 @@ class SwipePicker : LinearLayout {
         }
     }
 
-    fun setMaxLength(max: Int) {
-        val filters = inputEditText.filters
+    private fun setMaxLength(length: Int) {
+        inputEditText.filters = inputEditText.filters
                 .filter { f -> f !is InputFilter.LengthFilter }
                 .toMutableList()
-        filters.add(InputFilter.LengthFilter(max))
-        inputEditText.filters = filters.toTypedArray()
+                .apply { add(InputFilter.LengthFilter(length)) }
+                .toTypedArray()
     }
 
     fun setHintTextColor(color: Int) = hintTextView.setTextColor(color)
