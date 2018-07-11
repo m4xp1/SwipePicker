@@ -2,6 +2,7 @@ package one.xcorp.widget.swipepicker
 
 import android.content.Context
 import android.graphics.*
+import android.support.annotation.ColorInt
 import android.support.v4.content.ContextCompat
 import android.support.v4.view.ViewCompat
 import android.util.AttributeSet
@@ -17,18 +18,20 @@ class HoverView : View {
             requestLayout()
         }
     var textColor: Int
-        set(value) {
+        @ColorInt get
+        set(@ColorInt value) {
             field = value
             invalidate()
         }
     var color: Int
-        set(value) {
+        @ColorInt get
+        set(@ColorInt value) {
             field = value
             invalidate()
         }
-    var text: CharSequence? = ""
+    var text: CharSequence = ""
         set(value) {
-            field = value ?: ""
+            field = value
             requestLayout()
             invalidate()
         }
