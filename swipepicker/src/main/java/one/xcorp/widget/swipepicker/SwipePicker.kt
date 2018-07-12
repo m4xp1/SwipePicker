@@ -7,6 +7,10 @@ import android.content.res.TypedArray
 import android.graphics.PixelFormat
 import android.graphics.PorterDuff
 import android.graphics.drawable.Drawable
+import android.os.Parcel
+import android.os.Parcelable
+import android.support.annotation.ColorInt
+import android.support.v4.graphics.drawable.DrawableCompat
 import android.support.v4.view.GestureDetectorCompat
 import android.support.v4.view.ViewCompat
 import android.support.v4.widget.TextViewCompat
@@ -25,6 +29,7 @@ import android.view.WindowManager.LayoutParams.*
 import android.view.inputmethod.EditorInfo
 import android.widget.LinearLayout
 import android.widget.TextView
+import java.io.Serializable
 import java.text.NumberFormat
 import java.util.*
 
@@ -49,23 +54,41 @@ class SwipePicker : LinearLayout {
         get() = inputEditText.textColors
         set(value) = inputEditText.setTextColor(value)
     var backgroundInput: Drawable?
-        get() = inputEditText.background
-        set(value) = ViewCompat.setBackground(inputEditText, value)
-    var backgroundInputTint: ColorStateList?
-        get() = ViewCompat.getBackgroundTintList(inputEditText)
-        set(value) = ViewCompat.setBackgroundTintList(inputEditText, value)
-    var backgroundInputTintMode: PorterDuff.Mode?
-        get() = ViewCompat.getBackgroundTintMode(inputEditText)
-        set(value) = ViewCompat.setBackgroundTintMode(inputEditText, value)
+        get() = inputAreaView.background
+        set(value) {
+            // clear tint on previously background
+            val background = backgroundInput
+            if (background != null) {
+                DrawableCompat.setTintList(background, null)
+                DrawableCompat.setTintMode(background, PorterDuff.Mode.SRC_IN)
+            }
+            // set new background and invalidate tint
+            ViewCompat.setBackground(inputAreaView, value)
+            backgroundInputTint = backgroundInputTint
+            backgroundInputTintMode = backgroundInputTintMode
+        }
+    var backgroundInputTint: ColorStateList? = null
+        set(value) {
+            field = value
+            backgroundInput?.let { DrawableCompat.setTintList(it, value) }
+        }
+    var backgroundInputTintMode = PorterDuff.Mode.SRC_IN
+        set(value) {
+            field = value
+            backgroundInput?.let { DrawableCompat.setTintMode(it, value) }
+        }
     var manualInput = true
         set(enable) {
-            if (!enable) isSelected = false
+            if (!enable) {
+                isSelected = false
+            }
             field = enable
         }
     var inputFilters: Array<InputFilter>
         get() = inputEditText.filters
         set(value) {
             inputEditText.filters = value
+            invalidateValue()
         }
     var inputType: Int
         get() = inputEditText.inputType
@@ -108,10 +131,10 @@ class SwipePicker : LinearLayout {
                 newValue = maxValue
             }
 
-            field = newValue
-            invalidateValue()
-
             if (newValue != oldValue) {
+                field = newValue
+                invalidateValue()
+
                 valueChangeListener?.onValueChanged(this, oldValue, newValue)
             }
         }
@@ -126,9 +149,8 @@ class SwipePicker : LinearLayout {
     private val inputEditText by lazy { findViewById<EditText>(android.R.id.input) }
 
     private var activated = false
-    private val fontScale: Float
     private val inputAreaPosition = IntArray(2)
-    private val hoverViewMargin: Float
+    private val hoverViewMargin = resources.getDimensionPixelSize(R.dimen.hoverView_margin).toFloat()
     private var hoverViewStyle = R.style.XcoRp_Style_SwipePicker_HoverView
     private val hoverViewLayoutParams by lazy { createHoverViewLayoutParams() }
     private val numberFormat = NumberFormat.getInstance(Locale.US).apply { isGroupingUsed = false }
@@ -162,13 +184,25 @@ class SwipePicker : LinearLayout {
         inputEditText.setOnBackPressedListener(::onInputCancel)
         inputEditText.setOnEditorActionListener(::onInputDone)
 
-        fontScale = inputEditText.textSize / hintTextView.textSize
-        hoverViewMargin = resources.getDimensionPixelSize(R.dimen.hoverView_margin).toFloat()
+        invalidateValue()
     }
 
     // It is required that the input area does not hide a hint.
     override fun getChildDrawingOrder(childCount: Int, i: Int) =
             if (i == 0) 1 else if (i == 1) 0 else i
+
+    private fun calculateHintPosition(activated: Boolean): Float {
+        if (activated) return 0f
+
+        val scaledHeight = hintTextView.height *
+                inputEditText.height / hintTextView.height.toFloat()
+        val scaledVerticalOffset = (hintTextView.height - scaledHeight) / 2
+
+        return scaledHeight + scaledVerticalOffset + inputEditText.top
+    }
+
+    private fun calculateFontScale(activated: Boolean) =
+            if (activated) 1f else inputEditText.textSize / hintTextView.textSize
 
     private fun createHoverView() = HoverView(context,
             defStyleRes = hoverViewStyle).apply { alpha = 0f }
@@ -207,7 +241,7 @@ class SwipePicker : LinearLayout {
         }
         if (typedArray.hasValue(R.styleable.SwipePicker_backgroundInputTintMode)) {
             backgroundInputTintMode = typedArray
-                    .getTintMode(R.styleable.SwipePicker_backgroundInputTintMode, null)
+                    .getTintMode(R.styleable.SwipePicker_backgroundInputTintMode, backgroundInputTintMode)
         }
         manualInput = typedArray.getBoolean(R.styleable.SwipePicker_manualInput, manualInput)
         setMaxLength(typedArray.getInt(R.styleable.SwipePicker_android_maxLength,
@@ -255,9 +289,8 @@ class SwipePicker : LinearLayout {
         }
     }
 
-    private fun TypedArray.getTintMode(resId: Int, default: PorterDuff.Mode?): PorterDuff.Mode? {
-        val mode = getInt(resId, -1)
-        return when (mode) {
+    private fun TypedArray.getTintMode(resId: Int, default: PorterDuff.Mode): PorterDuff.Mode {
+        return when (getInt(resId, -1)) {
             3 -> PorterDuff.Mode.SRC_OVER
             5 -> PorterDuff.Mode.SRC_IN
             9 -> PorterDuff.Mode.SRC_ATOP
@@ -268,21 +301,27 @@ class SwipePicker : LinearLayout {
         }
     }
 
-    private fun setMaxLength(length: Int) {
-        inputEditText.filters = inputEditText.filters
-                .filter { f -> f !is InputFilter.LengthFilter }
-                .toMutableList()
-                .apply { add(InputFilter.LengthFilter(length)) }
-                .toTypedArray()
-    }
-
-    fun setHintTextColor(color: Int) = hintTextView.setTextColor(color)
+    fun setHintTextColor(@ColorInt color: Int) = hintTextView.setTextColor(color)
 
     fun setHintTextAppearance(resId: Int) = TextViewCompat.setTextAppearance(hintTextView, resId)
 
-    fun setInputTextColor(color: Int) = inputEditText.setTextColor(color)
+    fun setInputTextColor(@ColorInt color: Int) = inputEditText.setTextColor(color)
 
     fun setInputTextAppearance(resId: Int) = TextViewCompat.setTextAppearance(inputEditText, resId)
+
+    fun setBackgroundInputTint(@ColorInt tintColor: Int) {
+        backgroundInputTint = ColorStateList.valueOf(tintColor)
+    }
+
+    fun setMaxLength(length: Int) {
+        inputFilters = inputFilters
+                .filter { f -> f !is InputFilter.LengthFilter }
+                .toMutableList()
+                .apply { add(0, InputFilter.LengthFilter(length)) }
+                .toTypedArray()
+    }
+
+    fun getInputText(): String = inputEditText.text.toString()
 
     fun setValue(value: CharSequence): Boolean {
         val result = valueTransformer.transform(this, value.toString())
@@ -331,12 +370,52 @@ class SwipePicker : LinearLayout {
         swipeHandler = handler
     }
 
+    override fun onSaveInstanceState(): Parcelable {
+        hintAnimation?.end() // end animation before save
+        val state = SavedState(super.onSaveInstanceState())
+
+        state.allowDeactivate = allowDeactivate
+        state.manualInput = manualInput
+        state.scale = scale
+        state.minValue = minValue
+        state.maxValue = maxValue
+        state.step = step
+        state.value = value
+        state.activated = isActivated
+        state.selected = isSelected
+
+        return state
+    }
+
+    override fun onRestoreInstanceState(state: Parcelable?) {
+        if (state !is SavedState) {
+            super.onRestoreInstanceState(state)
+            return
+        }
+
+        allowDeactivate = state.allowDeactivate
+        manualInput = state.manualInput
+        scale = state.scale
+        minValue = state.minValue
+        maxValue = state.maxValue
+        step = state.step
+        value = state.value
+        isActivated = state.activated
+        isSelected = state.selected
+
+        hintAnimation?.end() // end animation before restore
+        super.onRestoreInstanceState(state.superState)
+    }
+
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
         super.onLayout(changed, left, top, right, bottom)
 
         if (changed) {
-            isActivated = activated
-            hintAnimation?.end()
+            val instantly = hintAnimation?.isRunning != true
+            animateHint(isActivated)
+            if (instantly) {
+                hintAnimation?.end()
+            }
 
             if (isPressed) {
                 invalidateHoverViewPosition()
@@ -356,8 +435,8 @@ class SwipePicker : LinearLayout {
         val result = gestureDetector.onTouchEvent(event)
         if (event.action == ACTION_UP || event.action == ACTION_CANCEL) {
             handler.removeCallbacksAndMessages(gestureDetector)
-            isPressed = false
             view.playSoundEffect(CLICK)
+            isPressed = false
         }
         return result
     }
@@ -365,72 +444,88 @@ class SwipePicker : LinearLayout {
     override fun isActivated() = activated
 
     override fun setActivated(activated: Boolean) {
+        if (activated == isActivated) return
+
+        if (!activated) {
+            isPressed = false
+            isSelected = false
+        }
+
+        animateHint(activated)
+        this.activated = activated
+
+        stateChangeListener?.onStateChanged(this, activated)
+    }
+
+    private fun animateHint(activated: Boolean) {
         hintAnimation?.removeAllListeners()
         hintAnimation?.cancel()
 
+        val yPosition = calculateHintPosition(activated)
+        val fontScale = calculateFontScale(activated)
+
         hintAnimation = if (activated) {
-            animateHintTo(0f, 1f).addEndListener {
-                invalidateValue()
+            createHintAnimation(yPosition, fontScale).addEndListener {
                 super.setActivated(activated)
+                setInputVisible(true)
             }
         } else {
-            isPressed = false
-            isSelected = false
-
-            val scaledHeight = hintTextView.height *
-                    inputEditText.height / hintTextView.height.toFloat()
-            val scaledVerticalOffset = (hintTextView.height - scaledHeight) / 2
-            val y = scaledHeight + scaledVerticalOffset + inputEditText.top
-
-            animateHintTo(y, fontScale).addStartListener {
-                disappearValue()
+            createHintAnimation(yPosition, fontScale).addStartListener {
                 super.setActivated(activated)
+                setInputVisible(false)
             }
         }
         hintAnimation?.start()
-
-        if (this.activated != activated) {
-            this.activated = activated
-            stateChangeListener?.onStateChanged(this, activated)
-        }
     }
 
-    private fun animateHintTo(y: Float, scale: Float): AnimatorSet {
+    private fun createHintAnimation(y: Float, scale: Float): AnimatorSet {
         val animatorSet = AnimatorSet()
+
         val animMove = ObjectAnimator.ofFloat(hintTextView, "translationY", y)
         val animScale = ObjectAnimator.ofPropertyValuesHolder(hintTextView,
                 PropertyValuesHolder.ofFloat("scaleX", scale),
                 PropertyValuesHolder.ofFloat("scaleY", scale))
+
         animatorSet.playTogether(animMove, animScale)
         animatorSet.duration = ANIMATION_DURATION
+
         return animatorSet
     }
 
     override fun setSelected(selected: Boolean) {
-        if (!manualInput || isSelected == selected) return
+        if (!manualInput || selected == isSelected) return
 
-        super.setSelected(selected)
-        if (!selected) {
-            cancelInput()
-        } else if (!isActivated) {
+        if (selected && !isActivated) {
             isActivated = true
         }
 
-        if (hintAnimation?.isRunning != true) {
-            setInputEnabled(selected)
-        } else {
-            hintAnimation?.addEndListener { setInputEnabled(isSelected) }
+        super.setSelected(selected)
+        invalidateValue()
+
+        if (inputEditText.visibility == View.VISIBLE) {
+            setInputEnable(selected)
         }
     }
 
-    private fun setInputEnabled(enabled: Boolean) {
-        if (inputEditText.isEnabled == enabled) {
+    private fun setInputVisible(visible: Boolean) {
+        if (visible) {
+            inputEditText.visibility = View.VISIBLE
+            setInputEnable(isSelected)
+        } else {
+            setInputEnable(false)
+            inputEditText.visibility = View.INVISIBLE
+        }
+    }
+
+    private fun setInputEnable(enable: Boolean) {
+        if (inputEditText.isEnabled == enable) {
             return
         }
 
-        inputEditText.isEnabled = enabled
-        if (enabled) {
+        inputEditText.isEnabled = enable
+        if (enable) {
             inputEditText.requestFocus()
+            inputEditText.selectAll() // selectAllOnFocus not always working when rotation
             inputEditText.showKeyboard()
         } else {
             inputEditText.clearFocus()
@@ -438,14 +533,9 @@ class SwipePicker : LinearLayout {
         }
     }
 
-    private fun cancelInput() {
-        invalidateValue()
-        isSelected = false
-    }
-
     private fun onInputCancel(): Boolean {
         if (isSelected) {
-            cancelInput()
+            isSelected = false
             return true
         }
         return false
@@ -470,7 +560,8 @@ class SwipePicker : LinearLayout {
         if (pressed == isPressed) return
 
         if (pressed && !isActivated) {
-            hintTextView.alpha = 0f
+            hintTextView.alpha = 0f // hide hint immediately
+
             isActivated = true
             hintAnimation?.end()
         }
@@ -499,6 +590,7 @@ class SwipePicker : LinearLayout {
     }
 
     private fun hideHoverView() {
+        // animate with duration 0 to undo the previous animation
         hintTextView.animate().alpha(1f).setDuration(0).start()
         hoverView.animate().alpha(0f).setDuration(0)
                 .setListener(object : AnimatorListenerAdapter() {
@@ -521,24 +613,12 @@ class SwipePicker : LinearLayout {
     }
 
     private fun invalidateValue() {
-        val isSelected = inputEditText.isSelected
-        inputEditText.setText(valueTransformer.transform(this, value))
-        if (isSelected) {
-            inputEditText.selectAll()
-        }
+        if (isSelected) return
 
+        inputEditText.setText(valueTransformer.transform(this, value))
         if (isPressed) {
             // get the value from input to take into account the maximum length
             hoverView.text = inputEditText.text
-            invalidateHoverViewPosition()
-        }
-    }
-
-    private fun disappearValue() {
-        inputEditText.text = null
-
-        if (isPressed) {
-            hoverView.text = null
             invalidateHoverViewPosition()
         }
     }
@@ -663,6 +743,57 @@ class SwipePicker : LinearLayout {
                 destination > scale.lastIndex -> scale.last() + (destination - scale.lastIndex) * step
             // move on the scale
                 else -> scale[destination]
+            }
+        }
+    }
+
+    private class SavedState : BaseSavedState {
+
+        var allowDeactivate = true
+        var manualInput = true
+        var scale: List<Float>? = null
+        var minValue = -Float.MAX_VALUE
+        var maxValue = Float.MAX_VALUE
+        var step = 1f
+        var value = 1f
+        var activated = false
+        var selected = false
+
+        constructor(superState: Parcelable) : super(superState)
+
+        constructor(parcel: Parcel) : super(parcel) {
+            allowDeactivate = parcel.readByte() != 0.toByte()
+            manualInput = parcel.readByte() != 0.toByte()
+            @Suppress("UNCHECKED_CAST")
+            scale = parcel.readSerializable() as List<Float>?
+            minValue = parcel.readFloat()
+            maxValue = parcel.readFloat()
+            step = parcel.readFloat()
+            value = parcel.readFloat()
+            activated = parcel.readByte() != 0.toByte()
+            selected = parcel.readByte() != 0.toByte()
+        }
+
+        override fun writeToParcel(parcel: Parcel, flags: Int) {
+            super.writeToParcel(parcel, flags)
+            parcel.writeByte(if (allowDeactivate) 1 else 0)
+            parcel.writeByte(if (manualInput) 1 else 0)
+            parcel.writeSerializable(scale as Serializable)
+            parcel.writeFloat(minValue)
+            parcel.writeFloat(maxValue)
+            parcel.writeFloat(step)
+            parcel.writeFloat(value)
+            parcel.writeByte(if (activated) 1 else 0)
+            parcel.writeByte(if (selected) 1 else 0)
+        }
+
+        companion object CREATOR : Parcelable.Creator<SavedState> {
+            override fun createFromParcel(parcel: Parcel): SavedState {
+                return SavedState(parcel)
+            }
+
+            override fun newArray(size: Int): Array<SavedState?> {
+                return arrayOfNulls(size)
             }
         }
     }
