@@ -412,6 +412,7 @@ class SwipePicker : LinearLayout {
 
         if (changed) {
             val instantly = hintAnimation?.isRunning != true
+
             animateHint(isActivated)
             if (instantly) {
                 hintAnimation?.end()
