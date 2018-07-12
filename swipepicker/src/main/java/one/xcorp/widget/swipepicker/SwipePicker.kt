@@ -252,7 +252,9 @@ class SwipePicker : LinearLayout {
             keyListener = DigitsKeyListener
                     .getInstance(typedArray.getString(R.styleable.SwipePicker_android_digits))
         }
-        scale = typedArray.getFloatArray(R.styleable.SwipePicker_scale)?.toList()
+        if (typedArray.hasValue(R.styleable.SwipePicker_scale)) {
+            scale = typedArray.getFloatArray(R.styleable.SwipePicker_scale).toList()
+        }
         minValue = typedArray.getFloat(R.styleable.SwipePicker_minValue, minValue)
         maxValue = typedArray.getFloat(R.styleable.SwipePicker_maxValue, maxValue)
         if (minValue >= maxValue) {
@@ -270,9 +272,10 @@ class SwipePicker : LinearLayout {
      * Read floating array from resources xml.
      *
      * @param index Index of attribute to retrieve.
-     * @return Read floating array. Returns {@code null} if the given resId does not exist.
+     * @return Read floating array. Throws exception if
+     * the given resId does not exist or can't get array.
      */
-    private fun TypedArray.getFloatArray(index: Int): FloatArray? {
+    private fun TypedArray.getFloatArray(index: Int): FloatArray {
         var typedArray: TypedArray? = null
         return try {
             typedArray = resources.obtainTypedArray(getResourceId(index, -1))
@@ -281,9 +284,10 @@ class SwipePicker : LinearLayout {
             for (i in 0 until typedArray.length()) {
                 result[i] = typedArray.getFloat(i, 0f)
             }
-            result
+
+            if (result.isEmpty()) throw IllegalStateException() else result
         } catch (e: Throwable) {
-            null
+            throw IllegalArgumentException("Can't get float array by specified resource ID.")
         } finally {
             typedArray?.recycle()
         }
