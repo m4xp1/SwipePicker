@@ -150,7 +150,7 @@ class SwipePicker : LinearLayout {
 
     private var activated = false
     private val inputAreaPosition = IntArray(2)
-    private val hoverViewMargin = resources.getDimensionPixelSize(R.dimen.hoverView_margin).toFloat()
+    private val hoverViewMargin = resources.getDimensionPixelSize(R.dimen.hoverView_margin)
     private var hoverViewStyle = R.style.XcoRp_Style_SwipePicker_HoverView
     private val hoverViewLayoutParams by lazy { createHoverViewLayoutParams() }
     private val numberFormat = NumberFormat.getInstance(Locale.US).apply { isGroupingUsed = false }
@@ -609,7 +609,7 @@ class SwipePicker : LinearLayout {
         hoverView.x = inputAreaPosition[0] +
                 inputAreaView.width / 2f - hoverView.measuredWidth / 2f
         hoverView.y = inputAreaPosition[1] -
-                hoverView.measuredHeight - hoverViewMargin
+                hoverView.measuredHeight - hoverViewMargin.toFloat()
     }
 
     private fun invalidateValue() {
