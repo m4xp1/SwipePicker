@@ -78,7 +78,7 @@ class HoverView : View {
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        paint.getTextBounds(text.toString(), 0, text!!.length, contentRect)
+        paint.getTextBounds(text.toString(), 0, text.length, contentRect)
 
         val right = Math.max(ViewCompat.getMinimumWidth(this),
                 paddingLeft + contentRect.width() + paddingRight)
@@ -133,6 +133,6 @@ class HoverView : View {
         val fm = paint.fontMetrics
 
         val baseline = contentRect.height() / 2 + (fm.descent - fm.ascent) / 2 - fm.descent
-        canvas.drawText(text, 0, text!!.length, contentRect.width() / 2f, baseline, paint)
+        canvas.drawText(text, 0, text.length, contentRect.width() / 2f, baseline, paint)
     }
 }
