@@ -4,6 +4,7 @@
 
     <declare-styleable name="SwipePicker">
         <attr name="android:minWidth" />
+        <attr name="childPadding" format="dimension" />
         <attr name="android:hint" />
         <attr name="android:state_activated" />
         <attr name="allowDeactivate" format="boolean" />
