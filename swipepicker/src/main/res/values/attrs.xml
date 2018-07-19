@@ -23,6 +23,7 @@
         <attr name="android:maxLength" />
         <attr name="android:inputType" />
         <attr name="android:digits" />
+        <attr name="stickyScale" format="boolean" />
         <attr name="scale" format="reference" />
         <attr name="minValue" format="float" />
         <attr name="maxValue" format="float" />

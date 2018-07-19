@@ -29,6 +29,7 @@ import android.view.WindowManager.LayoutParams.*
 import android.view.inputmethod.EditorInfo
 import android.widget.LinearLayout
 import android.widget.TextView
+import one.xcorp.widget.swipepicker.SwipeHandler.Params
 import java.io.Serializable
 import java.text.NumberFormat
 import java.util.*
@@ -100,14 +101,28 @@ class SwipePicker : LinearLayout {
         set(value) {
             inputEditText.keyListener = value
         }
-    var scale: List<Float>? = null
-        set(value) {
-            value?.let {
-                if (it.isEmpty() || !it.windowed(2).all { (a, b) -> a < b })
-                    throw IllegalArgumentException("Invalid values scale format. " +
-                            "An array must have one or more elements in ascending order.")
+    var stickyScale = false
+        set(enable) {
+            field = enable
+            if (enable && scale != null) {
+                value = value // stick value to scale
             }
-            field = value?.toList()
+        }
+    var scale: List<Float>? = null
+        set(scale) {
+            if (scale == null) {
+                field = null
+                return
+            }
+
+            require(!scale.isEmpty() && scale.windowed(2).all { (a, b) -> a < b }) {
+                "Invalid values scale format. An array must have one or more elements in ascending order."
+            }
+
+            field = scale.toList()
+            if (stickyScale) {
+                value = value // stick value to scale
+            }
         }
     var minValue = -Float.MAX_VALUE
         set(min) {
@@ -120,10 +135,20 @@ class SwipePicker : LinearLayout {
             value = value // check value restriction
         }
     var step = 1f
+        set(step) {
+            field = step
+            if (stickyScale && scale != null) {
+                value = value // stick value to scale
+            }
+        }
     var value = 1f
         set(value) {
             val oldValue = field
             var newValue = value
+
+            if (stickyScale) {
+                newValue = stickToScale(newValue)
+            }
 
             if (newValue < minValue) {
                 newValue = minValue
@@ -148,18 +173,19 @@ class SwipePicker : LinearLayout {
     private val inputAreaView by lazy { findViewById<View>(android.R.id.inputArea) }
     private val inputEditText by lazy { findViewById<EditText>(android.R.id.input) }
 
+    private val numberFormat = NumberFormat.getInstance(Locale.US).apply { isGroupingUsed = false }
+    private val swipeHandler = SwipeHandler()
     private var activated = false
     private val inputAreaPosition = IntArray(2)
+    private var hintAnimation: AnimatorSet? = null
     private val hoverViewMargin = resources.getDimensionPixelSize(R.dimen.hoverView_margin)
     private var hoverViewStyle = R.style.XcoRp_Style_SwipePicker_HoverView
     private val hoverViewLayoutParams by lazy { createHoverViewLayoutParams() }
-    private val numberFormat = NumberFormat.getInstance(Locale.US).apply { isGroupingUsed = false }
-    private var hintAnimation: AnimatorSet? = null
 
     private var valueTransformer: ValueTransformer = object : ValueTransformer {}
     private var stateChangeListener: OnStateChangeListener? = null
     private var valueChangeListener: OnValueChangeListener? = null
-    private var swipeHandler: OnSwipeHandler = object : OnSwipeHandler {}
+    private var swipeListener: OnSwipeListener = object : OnSwipeListener {}
 
     constructor(context: Context) : this(context, null)
 
@@ -252,14 +278,13 @@ class SwipePicker : LinearLayout {
             keyListener = DigitsKeyListener
                     .getInstance(typedArray.getString(R.styleable.SwipePicker_android_digits))
         }
+        stickyScale = typedArray.getBoolean(R.styleable.SwipePicker_stickyScale, stickyScale)
         if (typedArray.hasValue(R.styleable.SwipePicker_scale)) {
             scale = typedArray.getFloatArray(R.styleable.SwipePicker_scale).toList()
         }
         minValue = typedArray.getFloat(R.styleable.SwipePicker_minValue, minValue)
         maxValue = typedArray.getFloat(R.styleable.SwipePicker_maxValue, maxValue)
-        if (minValue >= maxValue) {
-            throw IllegalArgumentException("The minimum value is greater than the maximum.")
-        }
+        require(minValue < maxValue) { "The minimum value is greater than the maximum." }
         step = typedArray.getFloat(R.styleable.SwipePicker_step, step)
         value = typedArray.getFloat(R.styleable.SwipePicker_value, value)
         hoverViewStyle = typedArray.getResourceId(
@@ -285,9 +310,9 @@ class SwipePicker : LinearLayout {
                 result[i] = typedArray.getFloat(i, 0f)
             }
 
-            if (result.isEmpty()) throw IllegalStateException() else result
+            if (result.isEmpty()) throw IllegalStateException("Array is empty.") else result
         } catch (e: Throwable) {
-            throw IllegalArgumentException("Can't get float array by specified resource ID.")
+            throw IllegalArgumentException("Can't get float array by specified resource ID.", e)
         } finally {
             typedArray?.recycle()
         }
@@ -363,15 +388,15 @@ class SwipePicker : LinearLayout {
         valueChangeListener = listener
     }
 
-    fun setOnSwipeHandler(handler: (value: Float, division: Int) -> Float) =
-            setOnSwipeHandler(object : OnSwipeHandler {
+    fun setOnSwipeListener(listener: (value: Float, division: Int) -> Float) =
+            setOnSwipeListener(object : OnSwipeListener {
                 override fun onSwipe(view: SwipePicker, value: Float, division: Int): Float {
-                    return handler(value, division)
+                    return listener(value, division)
                 }
             })
 
-    fun setOnSwipeHandler(handler: OnSwipeHandler) {
-        swipeHandler = handler
+    fun setOnSwipeListener(listener: OnSwipeListener) {
+        swipeListener = listener
     }
 
     override fun onSaveInstanceState(): Parcelable {
@@ -617,6 +642,24 @@ class SwipePicker : LinearLayout {
                 hoverView.measuredHeight - hoverViewMargin.toFloat()
     }
 
+    private fun stickToScale(value: Float): Float {
+        scale?.let { scale ->
+            val index = scale.binarySearch(value)
+            if (index >= 0) return value
+
+            val insertion = -index - 1
+            return when (insertion) {
+            // outside value from left side
+                0 -> swipeHandler.closestInBoundary(scale.first(), step, minValue, value)
+            // outside value from right side
+                scale.size -> swipeHandler.closestInBoundary(scale.last(), step, maxValue, value)
+            // value on scale
+                else -> swipeHandler.closestValue(scale[insertion - 1], scale[insertion], value)
+            }
+        }
+        return value
+    }
+
     private fun invalidateValue() {
         if (isSelected) return
 
@@ -676,79 +719,19 @@ class SwipePicker : LinearLayout {
         fun onValueChanged(view: SwipePicker, oldValue: Float, newValue: Float)
     }
 
-    interface OnSwipeHandler {
+    interface OnSwipeListener {
 
         /**
-         * The handler is called when the gesture occurs and
-         * is intended to change the algorithm for calculating the value.
+         * Handling a swipe gesture.
          *
          * @param view SwipePicker of initiating event.
          * @param value The value from which need moved.
          * @param division The number of divisions that have moved.
          * @return The calculated value after the gesture processing which must be set to the view.
          */
-        fun onSwipe(view: SwipePicker, value: Float, division: Int): Float {
-            if (division == 0) return value
-
-            val scale = view.scale
-            val step = view.step
-
-            // the scale is not specified or the motion is strictly outside the scale without crossing it
-            if (scale == null
-                    || (value < scale.first() && division < 0)
-                    || (value > scale.last() && division > 0)) {
-                return value + (division * step)
-            }
-            // movement outside the scale with a possible intersection of it
-            if (value !in scale.first()..scale.last()) {
-                return moveOutside(scale, value, division, step)
-            }
-            // Finding the index of the value on the scale. If the value is not found
-            // returns the index of the nearest value taking into account the direction of the gesture.
-            var index: Int = scale.binarySearch(value)
-            if (index < 0) {
-                val offset = if (division < 0) 1 else 2
-                index = -(index + offset)
-            }
-            // the value index lies on the scale, we move along it
-            return moveOnScale(scale, index, division, step)
-        }
-
-        private fun moveOutside(scale: List<Float>, fromValue: Float, division: Int, step: Float): Float {
-            var boundaryIndex = 0
-            var direction = -1  // direction left to right
-
-            if (fromValue > scale.last()) {
-                boundaryIndex = scale.lastIndex
-                direction = 1 // direction right to left
-            }
-
-            // if step 0 means we are attracted to the boundary of the scale
-            if (step == 0f) return moveOnScale(scale, boundaryIndex, division + direction, step)
-
-            val distance = Math.abs(fromValue - scale[boundaryIndex])
-            // the number of divisions up to the scale of values remaining after the move
-            val remainder = Math.ceil(distance / step * 1.0).toInt() - Math.abs(division)
-
-            return when {
-            // did not reach the scale, mean just making a move
-                remainder > 0 -> fromValue + (division * step)
-            // reached the scale, mean moving to the remaining divisions along it
-                else -> moveOnScale(scale, boundaryIndex, remainder * direction, step)
-            }
-        }
-
-        private fun moveOnScale(scale: List<Float>, fromIndex: Int, division: Int, step: Float): Float {
-            val destination = fromIndex + division
-
-            return when {
-            // move on the scale outwards to the left
-                destination < 0 -> scale.first() + destination * step
-            // move on the scale outwards to the right
-                destination > scale.lastIndex -> scale.last() + (destination - scale.lastIndex) * step
-            // move on the scale
-                else -> scale[destination]
-            }
+        fun onSwipe(view: SwipePicker, value: Float, division: Int): Float = with(view) {
+            val params = Params(scale, step)
+            return swipeHandler.onSwipe(params, value, division)
         }
     }
 
@@ -783,7 +766,7 @@ class SwipePicker : LinearLayout {
             super.writeToParcel(parcel, flags)
             parcel.writeByte(if (allowDeactivate) 1 else 0)
             parcel.writeByte(if (manualInput) 1 else 0)
-            parcel.writeSerializable(scale as Serializable)
+            parcel.writeSerializable(scale as Serializable?)
             parcel.writeFloat(minValue)
             parcel.writeFloat(maxValue)
             parcel.writeFloat(step)
@@ -854,7 +837,7 @@ class SwipePicker : LinearLayout {
 
             if (previousDivision != division) {
                 if (!isPressed) onShowPress()
-                value = swipeHandler.onSwipe(this@SwipePicker, initialValue, division)
+                value = swipeListener.onSwipe(this@SwipePicker, initialValue, division)
             }
 
             previousDivision = division
