@@ -20,6 +20,7 @@ import android.text.InputType
 import android.text.method.DigitsKeyListener
 import android.text.method.KeyListener
 import android.util.AttributeSet
+import android.util.TypedValue
 import android.view.*
 import android.view.MotionEvent.ACTION_CANCEL
 import android.view.MotionEvent.ACTION_UP
@@ -48,9 +49,15 @@ class SwipePicker : LinearLayout {
             hintTextView.text = value
         }
     var allowDeactivate = true
+    var hitTextSize: Float
+        get() = hintTextView.textSize
+        set(value) = hintTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, value)
     var hintTextColor: ColorStateList
         get() = hintTextView.textColors
         set(value) = hintTextView.setTextColor(value)
+    var inputTextSize: Float
+        get() = inputEditText.textSize
+        set(value) = inputEditText.setTextSize(TypedValue.COMPLEX_UNIT_SP, value)
     var inputTextColor: ColorStateList
         get() = inputEditText.textColors
         set(value) = inputEditText.setTextColor(value)
@@ -337,9 +344,13 @@ class SwipePicker : LinearLayout {
         inputEditText.setPadding(padding, padding, padding, padding)
     }
 
+    fun setHintTextSize(unit: Int, size: Float) = hintTextView.setTextSize(unit, size)
+
     fun setHintTextColor(@ColorInt color: Int) = hintTextView.setTextColor(color)
 
     fun setHintTextAppearance(resId: Int) = TextViewCompat.setTextAppearance(hintTextView, resId)
+
+    fun setInputTextSize(unit: Int, size: Float) = inputEditText.setTextSize(unit, size)
 
     fun setInputTextColor(@ColorInt color: Int) = inputEditText.setTextColor(color)
 
