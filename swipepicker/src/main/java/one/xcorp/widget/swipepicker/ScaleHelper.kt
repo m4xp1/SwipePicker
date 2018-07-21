@@ -71,8 +71,8 @@ internal class ScaleHelper {
      *
      * @param scale The scale in which you must move.
      * Сan be {@code null} if you only need to take into account the step.
-     * @param step step with which you need to move outside the scale.
-     * Can be 0 if movement outside the scale is forbidden.
+     * @param step Step with which you need to move.
+     * If is 0 then movement outside the scale is forbidden.
      * @param value The value from which need moved.
      * @param division The number of divisions that have moved.
      * @return The calculated value for specified division.
