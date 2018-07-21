@@ -16,7 +16,7 @@ class SwipeHandlerTest {
         assertEquals(closestValue(-1f, -3f, -2.1f), -3f)
     }
 
-    @Test
+    @Test // Without limit.
     fun closestInBoundary1() = with(swipeHandler) {
         assertEquals(closestInBoundary(-2f, 0f, -5f), -2f)
         assertEquals(closestInBoundary(3.5f, 0f, 10f), 3.5f)
@@ -25,7 +25,7 @@ class SwipeHandlerTest {
         assertEquals(closestInBoundary(3.5f, 1.5f, 13.25f), 12.5f)
     }
 
-    @Test
+    @Test // Given the limit.
     fun closestInBoundary2() = with(swipeHandler) {
         assertEquals(closestInBoundary(-2f, 0f, -5f, -3.5f), -2f)
         assertEquals(closestInBoundary(-2f, 0f, -5f, -3.6f), -5f)
