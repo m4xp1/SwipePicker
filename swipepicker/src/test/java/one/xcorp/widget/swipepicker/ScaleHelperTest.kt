@@ -3,12 +3,12 @@ package one.xcorp.widget.swipepicker
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-class SwipeHandlerTest {
+class ScaleHelperTest {
 
-    private val swipeHandler = SwipeHandler()
+    private val scaleHelper = ScaleHelper()
 
     @Test
-    fun closestValue() = with(swipeHandler) {
+    fun closestValue() = with(scaleHelper) {
         assertEquals(closestValue(1f, 3f, 2f), 1f)
         assertEquals(closestValue(1f, 3f, 2.1f), 3f)
 
@@ -17,7 +17,7 @@ class SwipeHandlerTest {
     }
 
     @Test // Without limit.
-    fun closestInBoundary1() = with(swipeHandler) {
+    fun closestInBoundary1() = with(scaleHelper) {
         assertEquals(closestInBoundary(-2f, 0f, -5f), -2f)
         assertEquals(closestInBoundary(3.5f, 0f, 10f), 3.5f)
 
@@ -26,7 +26,7 @@ class SwipeHandlerTest {
     }
 
     @Test // Given the limit.
-    fun closestInBoundary2() = with(swipeHandler) {
+    fun closestInBoundary2() = with(scaleHelper) {
         assertEquals(closestInBoundary(-2f, 0f, -5f, -3.5f), -2f)
         assertEquals(closestInBoundary(-2f, 0f, -5f, -3.6f), -5f)
         assertEquals(closestInBoundary(-2f, 0f, -5f, -6.5f), -5f)
@@ -55,13 +55,13 @@ class SwipeHandlerTest {
         assertEquals(closestInBoundary(3.5f, 1.5f, 10f, 6.5f), 6.5f)
     }
 
-    @Test // Swipe by step.
-    fun onSwipe1() {
-        var params = createParams(null, 0f)
+    @Test // Move by step.
+    fun moveTo1() {
+        var params = Params(null, 0f)
 
         assertBypass(params, -3, 3.6f, 3.6f, 3.6f, 3.6f)
 
-        params = createParams(null, 1.5f)
+        params = Params(null, 1.5f)
 
         assertBypass(params, -7, 1f, -0.5f, -2f, -3.5f, -5f, -6.5f, -8f, -9.5f)
         assertBypass(params, 7, 1f, 2.5f, 4f, 5.5f, 7f, 8.5f, 10f, 11.5f)
@@ -71,15 +71,15 @@ class SwipeHandlerTest {
 
         assertBypass(params, 5, -2f, -0.5f, 1f, 2.5f, 4f, 5.5f)
 
-        params = createParams(null, 1123.534f)
+        params = Params(null, 1123.534f)
 
         assertBypass(params, 5,
                 -2.6734f, 1120.8606f, 2244.3946f, 3367.9286f, 4491.4626f, 5614.9966f)
     }
 
-    @Test // Swipe by single scale.
-    fun onSwipe2() {
-        var params = createParams(listOf(1f), 0f)
+    @Test // Move by single scale.
+    fun moveTo2() {
+        var params = Params(listOf(1f), 0f)
 
         assertBypass(params, -3, -1.45f, -1.45f, -1.45f, -1.45f, reverse = false)
         assertBypass(params, 3, -11.45f, 1f, 1f, 1f, reverse = false)
@@ -87,7 +87,7 @@ class SwipeHandlerTest {
         assertBypass(params, -3, 12.15f, 1f, 1f, 1f, reverse = false)
         assertBypass(params, -3, 1f, 1f, 1f, 1f)
 
-        params = createParams(listOf(1f), 1.5f)
+        params = Params(listOf(1f), 1.5f)
 
         assertBypass(params, -5, 1f, -0.5f, -2f, -3.5f, -5f, -6.5f)
         assertBypass(params, 5, 1f, 2.5f, 4f, 5.5f, 7f, 8.5f)
@@ -111,7 +111,7 @@ class SwipeHandlerTest {
         assertBypass(params, -2, 5f, 4f, 2.5f, reverse = false)
         assertBypass(params, -5, 5f, 4f, 2.5f, 1f, -0.5f, -2f, reverse = false)
 
-        params = createParams(listOf(-0.4565f), 0.1234235f)
+        params = Params(listOf(-0.4565f), 0.1234235f)
 
         assertBypass(params, -4,
                 -0.4565f, -0.5799235f, -0.703347f, -0.8267705f, -0.950194f)
@@ -119,10 +119,11 @@ class SwipeHandlerTest {
                 -0.4f, -0.3330765f, -0.209653f, -0.0862295f, 0.037194f, reverse = false)
     }
 
-    @Test // Swipe by scale.
-    fun onSwipe3() {
+    @Test // Move by scale.
+    fun moveTo3() {
         val scale = listOf(-2f, -1.99f, -1.34f, -1f, 0f, 0.75f, 1.53f, 3.01f, 3.5f)
-        var params = createParams(scale, 0f)
+
+        var params = Params(scale, 0f)
 
         assertBypass(params, -4, -1.99f, -2f, -2f, -2f, -2f, reverse = false)
         assertBypass(params, -3, -1.99999999f, -2f, -2f, -2f, reverse = false)
@@ -138,7 +139,7 @@ class SwipeHandlerTest {
         assertBypass(params, -12, 7f, 3.5f, 3.01f, 1.53f, 0.75f,
                 0f, -1f, -1.34f, -1.99f, -2f, -2f, -2f, -2f, reverse = false)
 
-        params = createParams(scale, 1.5f)
+        params = Params(scale, 1.5f)
 
         assertBypass(params, -4, -1.99f, -2f, -3.5f, -5f, -6.5f)
         assertBypass(params, -3, -1.99999f, -2f, -3.5f, -5f, reverse = false)
@@ -160,9 +161,7 @@ class SwipeHandlerTest {
                 0f, -1f, -1.34f, -1.99f, -2f, -3.5f, -5f, -6.5f, reverse = false)
     }
 
-    private fun createParams(scale: List<Float>?, step: Float) = SwipeHandler.Params(scale, step)
-
-    private fun assertBypass(params: SwipeHandler.Params, division: Int,
+    private fun assertBypass(params: Params, division: Int,
                              vararg reference: Float, reverse: Boolean = true) {
         val referenceList = reference.toList()
         assertEquals(referenceList, bypassScale(params, reference.first(), division))
@@ -172,8 +171,10 @@ class SwipeHandlerTest {
         }
     }
 
-    private fun bypassScale(params: SwipeHandler.Params, value: Float, division: Int): List<Float> {
+    private fun bypassScale(params: Params, value: Float, division: Int): List<Float> {
         val progression = if (division < 0) 0 downTo division else 0..division
-        return progression.map { swipeHandler.onSwipe(params, value, it) }
+        return progression.map { scaleHelper.moveTo(params.scale, params.step, value, it) }
     }
+
+    private class Params(val scale: List<Float>?, val step: Float)
 }

@@ -2,7 +2,7 @@ package one.xcorp.widget.swipepicker
 
 import java.math.RoundingMode
 
-internal class SwipeHandler {
+internal class ScaleHelper {
 
     /**
      * Find the closest value to the specified values.
@@ -67,17 +67,20 @@ internal class SwipeHandler {
     }
 
     /**
-     * Handling a swipe gesture.
+     * Move on the scale from the value to the specified division.
      *
-     * @param params Parameters at which a gesture occurs.
+     * @param scale The scale in which you must move.
+     * Сan be {@code null} if you only need to take into account the step.
+     * @param step step with which you need to move outside the scale.
+     * Can be 0 if movement outside the scale is forbidden.
      * @param value The value from which need moved.
      * @param division The number of divisions that have moved.
-     * @return The calculated value after the gesture processing.
+     * @return The calculated value for specified division.
      */
-    fun onSwipe(params: Params, value: Float, division: Int): Float = with(params) {
+    fun moveTo(scale: List<Float>?, step: Float, value: Float, division: Int): Float {
         if (division == 0) return value
         // the scale is not specified, calculate the value based on the step
-        if (scale == null) return calculateValue(value, division, step)
+        if (scale == null) return moveByStep(value, division, step)
         // movement outside the scale without crossing it
         if ((value < scale.first() && division < 0) || (value > scale.last() && division > 0)) {
             return moveOutside(scale, value, division, step)
@@ -94,8 +97,11 @@ internal class SwipeHandler {
             index = -(index + offset)
         }
         // the value index lies on the scale, we move along it
-        return moveOnScale(scale, index, division, step)
+        return moveByScale(scale, index, division, step)
     }
+
+    private fun moveByStep(value: Float, division: Int, step: Float) =
+            (value.toBigDecimal() + division.toBigDecimal() * step.toBigDecimal()).toFloat()
 
     private fun moveOutside(scale: List<Float>, value: Float, division: Int, step: Float): Float {
         // outward movement is impossible
@@ -113,7 +119,7 @@ internal class SwipeHandler {
             offset = if (closestValue > value) -1 else 0
         }
         // calculate the value based on the step from closest value
-        return calculateValue(closestValue, division + offset, step)
+        return moveByStep(closestValue, division + offset, step)
     }
 
     private fun moveInside(scale: List<Float>, value: Float, division: Int, step: Float): Float {
@@ -128,32 +134,27 @@ internal class SwipeHandler {
             offset = 1
         }
         // if step 0 means we are attracted to the boundary of the scale and move along it
-        if (step == 0f) return moveOnScale(scale, boundaryIndex, division + offset, step)
+        if (step == 0f) return moveByScale(scale, boundaryIndex, division + offset, step)
         val distance = ((value - scale[boundaryIndex]) / step)
         // the number of divisions up to the scale of values remaining after the move
         val remainder = division + distance
                 .toBigDecimal().setScale(0, RoundingMode.UP).toInt()
         // move from the scale outwards or along it, depending on the sign of the remainder
-        return moveOnScale(scale, boundaryIndex, remainder, step)
+        return moveByScale(scale, boundaryIndex, remainder, step)
     }
 
-    private fun moveOnScale(scale: List<Float>, index: Int, division: Int, step: Float): Float {
+    private fun moveByScale(scale: List<Float>, index: Int, division: Int, step: Float): Float {
         val destination = index + division
 
         return when {
         // move on the scale outwards to the left
             destination < 0 ->
-                calculateValue(scale.first(), destination, step)
+                moveByStep(scale.first(), destination, step)
         // move on the scale outwards to the right
             destination > scale.lastIndex ->
-                calculateValue(scale.last(), (destination - scale.lastIndex), step)
+                moveByStep(scale.last(), (destination - scale.lastIndex), step)
         // move on the scale
             else -> scale[destination]
         }
     }
-
-    private fun calculateValue(value: Float, division: Int, step: Float) =
-            (value.toBigDecimal() + division.toBigDecimal() * step.toBigDecimal()).toFloat()
-
-    class Params(val scale: List<Float>?, val step: Float)
 }
