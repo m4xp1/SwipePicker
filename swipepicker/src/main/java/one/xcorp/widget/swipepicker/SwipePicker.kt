@@ -223,6 +223,7 @@ class SwipePicker : LinearLayout {
         inputAreaView.setOnTouchListener(::onTouch)
         inputEditText.setOnBackPressedListener(::onInputCancel)
         inputEditText.setOnEditorActionListener(::onInputDone)
+        inputEditText.setOnFocusChangeListener(::onFocusChange)
 
         invalidateValue()
     }
@@ -618,6 +619,13 @@ class SwipePicker : LinearLayout {
             return true
         }
         return false
+    }
+
+    @Suppress("UNUSED_PARAMETER")
+    private fun onFocusChange(view: View, hasFocus: Boolean) {
+        if (!hasFocus) {
+            isSelected = false
+        }
     }
 
     private fun showPress() {
