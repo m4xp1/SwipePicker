@@ -694,14 +694,17 @@ class SwipePicker : LinearLayout {
             if (index >= 0) return value
 
             val insertion = -index - 1
-            return when (insertion) {
+            val closestValue = when (insertion) {
             // outside value from left side
-                0 -> scaleHelper.closestInBoundary(scale.first(), step, minValue, value)
+                0 -> scaleHelper.closestInBoundary(scale.first(), step, value)
             // outside value from right side
-                scale.size -> scaleHelper.closestInBoundary(scale.last(), step, maxValue, value)
+                scale.size -> scaleHelper.closestInBoundary(scale.last(), step, value)
             // value on scale
                 else -> scaleHelper.closestValue(scale[insertion - 1], scale[insertion], value)
             }
+            // we are attracted to the limit if it is closer
+            return floatArrayOf(closestValue, minValue, maxValue)
+                    .reduce { r, i -> scaleHelper.closestValue(r, i, value) }
         }
         return value
     }

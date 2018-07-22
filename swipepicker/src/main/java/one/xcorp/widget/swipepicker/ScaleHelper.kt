@@ -37,36 +37,6 @@ internal class ScaleHelper {
     }
 
     /**
-     * Automatically completes the scale to the value and determines
-     * the closest value on the scale. Counts the specified limit and
-     * returns it if it is the closest value.
-     *
-     * @param boundary The end value of the scale from which
-     * you want to complete the scale with the specified step.
-     * @param step Step with which the scale is completed. If step is equal 0 then
-     * return boundary or limit, whichever is closer.
-     * @param limit Maximum permissible value when moving on a scale.
-     * @param value The value for which to search for the closest on the scale.
-     * @return Closest value on the virtual scale or limit.
-     * The closest values to the boundary in priority.
-     */
-    fun closestInBoundary(boundary: Float, step: Float, limit: Float, value: Float): Float {
-        val closestValue = if (step == 0f) {
-            closestValue(boundary, limit, value)
-        } else {
-            closestValue(closestInBoundary(boundary, step, value), limit, value)
-        }
-
-        return if (value < boundary) {
-            // value outside in left
-            Math.max(limit, closestValue)
-        } else {
-            // value outside in right
-            Math.min(closestValue, limit)
-        }
-    }
-
-    /**
      * Move on the scale from the value to the specified division.
      *
      * @param scale The scale in which you must move.

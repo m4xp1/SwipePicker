@@ -16,43 +16,19 @@ class ScaleHelperTest {
         assertEquals(closestValue(-1f, -3f, -2.1f), -3f)
     }
 
-    @Test // Without limit.
-    fun closestInBoundary1() = with(scaleHelper) {
+    @Test
+    fun closestInBoundary() = with(scaleHelper) {
         assertEquals(closestInBoundary(-2f, 0f, -5f), -2f)
         assertEquals(closestInBoundary(3.5f, 0f, 10f), 3.5f)
 
+        assertEquals(closestInBoundary(-2f, 1.5f, -3.5f), -3.5f)
+        assertEquals(closestInBoundary(3.5f, 1.5f, 6.5f), 6.5f)
+
         assertEquals(closestInBoundary(-2f, 1.5f, -8.75f), -8f)
         assertEquals(closestInBoundary(3.5f, 1.5f, 13.25f), 12.5f)
-    }
 
-    @Test // Given the limit.
-    fun closestInBoundary2() = with(scaleHelper) {
-        assertEquals(closestInBoundary(-2f, 0f, -5f, -3.5f), -2f)
-        assertEquals(closestInBoundary(-2f, 0f, -5f, -3.6f), -5f)
-        assertEquals(closestInBoundary(-2f, 0f, -5f, -6.5f), -5f)
-        assertEquals(closestInBoundary(-2f, 0f, 1f, -6.5f), 1f)
-
-        assertEquals(closestInBoundary(3.5f, 0f, 10f, 6.75f), 3.5f)
-        assertEquals(closestInBoundary(3.5f, 0f, 10f, 6.76f), 10f)
-        assertEquals(closestInBoundary(3.5f, 0f, 10f, 13f), 10f)
-        assertEquals(closestInBoundary(3.5f, 0f, 1.5f, 13f), 1.5f)
-
-        assertEquals(closestInBoundary(-2f, 1.5f, -5f, -2.75f), -2f)
-        assertEquals(closestInBoundary(-2f, 1.5f, -5f, -2.76f), -3.5f)
-        assertEquals(closestInBoundary(-2f, 1.5f, -5f, -4.25f), -3.5f)
-        assertEquals(closestInBoundary(-2f, 1.5f, -5f, -4.26f), -5f)
-        assertEquals(closestInBoundary(-2f, 1.5f, -5f, -6.5f), -5f)
-        assertEquals(closestInBoundary(-2f, 1.5f, 1.5f, -6.5f), 1.5f)
-
-        assertEquals(closestInBoundary(3.5f, 1.5f, 10f, 4.25f), 3.5f)
-        assertEquals(closestInBoundary(3.5f, 1.5f, 10f, 4.26f), 5f)
-        assertEquals(closestInBoundary(3.5f, 1.5f, 10f, 9.75f), 9.5f)
-        assertEquals(closestInBoundary(3.5f, 1.5f, 10f, 9.76f), 10f)
-        assertEquals(closestInBoundary(3.5f, 1.5f, 10f, 11.5f), 10f)
-        assertEquals(closestInBoundary(3.5f, 1.5f, 1f, 11.5f), 1f)
-
-        assertEquals(closestInBoundary(-2f, 1.5f, -5f, -3.5f), -3.5f)
-        assertEquals(closestInBoundary(3.5f, 1.5f, 10f, 6.5f), 6.5f)
+        assertEquals(closestInBoundary(-2f, 1.5f, -8.76f), -9.5f)
+        assertEquals(closestInBoundary(3.5f, 1.5f, 13.26f), 14f)
     }
 
     @Test // Move by step.
