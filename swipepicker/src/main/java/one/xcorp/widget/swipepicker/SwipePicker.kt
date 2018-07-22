@@ -297,7 +297,7 @@ class SwipePicker : LinearLayout {
                     .getInstance(typedArray.getString(R.styleable.SwipePicker_android_digits))
         }
         stickyScale = typedArray.getBoolean(R.styleable.SwipePicker_stickyScale, stickyScale)
-        if (typedArray.hasValue(R.styleable.SwipePicker_scale)) {
+        if (!isInEditMode && typedArray.hasValue(R.styleable.SwipePicker_scale)) {
             scale = typedArray.getFloatArray(R.styleable.SwipePicker_scale).toList()
         }
         minValue = typedArray.getFloat(R.styleable.SwipePicker_minValue, minValue)
@@ -328,7 +328,7 @@ class SwipePicker : LinearLayout {
                 result[i] = typedArray.getFloat(i, 0f)
             }
 
-            if (result.isEmpty()) throw IllegalStateException("Array is empty.") else result
+            if (!result.isEmpty()) result else throw IllegalArgumentException("Array is empty.")
         } catch (e: Throwable) {
             throw IllegalArgumentException("Can't get float array by specified resource ID.", e)
         } finally {
