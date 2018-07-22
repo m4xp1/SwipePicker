@@ -44,6 +44,9 @@ class HoverView : View {
     private val backgroundPath = Path()
     private val radiusCorner: Float
 
+    private val digits = Regex("\\d")
+    private val wideDigit = "4"
+
     constructor(context: Context) : this(context, null)
 
     constructor(context: Context, attrs: AttributeSet?) : this(context, attrs, 0)
@@ -78,7 +81,8 @@ class HoverView : View {
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        paint.getTextBounds(text.toString(), 0, text.length, contentRect)
+        val ems = text.toString().replace(digits, wideDigit)
+        paint.getTextBounds(ems, 0, ems.length, contentRect)
 
         val right = Math.max(ViewCompat.getMinimumWidth(this),
                 paddingLeft + contentRect.width() + paddingRight)
