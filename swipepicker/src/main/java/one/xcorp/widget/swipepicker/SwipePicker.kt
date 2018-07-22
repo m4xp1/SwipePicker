@@ -9,6 +9,7 @@ import android.graphics.PorterDuff
 import android.graphics.drawable.Drawable
 import android.os.Parcel
 import android.os.Parcelable
+import android.os.SystemClock
 import android.support.annotation.ColorInt
 import android.support.v4.graphics.drawable.DrawableCompat
 import android.support.v4.view.GestureDetectorCompat
@@ -22,15 +23,14 @@ import android.text.method.KeyListener
 import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.*
-import android.view.MotionEvent.ACTION_CANCEL
 import android.view.MotionEvent.ACTION_UP
 import android.view.SoundEffectConstants.CLICK
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.WindowManager.LayoutParams.*
 import android.view.inputmethod.EditorInfo
 import android.widget.LinearLayout
+import android.widget.Scroller
 import android.widget.TextView
-import one.xcorp.widget.swipepicker.SwipeHandler.Params
 import java.io.Serializable
 import java.text.NumberFormat
 import java.util.*
@@ -39,7 +39,12 @@ class SwipePicker : LinearLayout {
 
     companion object {
         private const val ANIMATION_DURATION = 200L
-        private const val DELAY_SHOW_PRESS = 200
+
+        private const val VELOCITY_DOWNSCALE = 2
+        private const val VELOCITY_THRESHOLD = 300
+
+        private const val PRESS_DELAY_SHOW = 200
+        private const val PRESS_DELAY_HIDE = 450
     }
 
     // <editor-fold desc="Properties">
@@ -49,6 +54,7 @@ class SwipePicker : LinearLayout {
             hintTextView.text = value
         }
     var allowDeactivate = true
+    var allowFling = true
     var hitTextSize: Float
         get() = hintTextView.textSize
         set(value) = hintTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, value)
@@ -175,16 +181,17 @@ class SwipePicker : LinearLayout {
 
     private val windowManager: WindowManager
     private val gestureDetector: GestureDetectorCompat
+    private val scrollHandler = ScrollHandler()
+    private val scaleHelper = ScaleHelper()
 
     private val hintTextView by lazy { findViewById<AppCompatTextView>(android.R.id.hint) }
     private val inputAreaView by lazy { findViewById<View>(android.R.id.inputArea) }
     private val inputEditText by lazy { findViewById<EditText>(android.R.id.input) }
 
     private val numberFormat = NumberFormat.getInstance(Locale.US).apply { isGroupingUsed = false }
-    private val swipeHandler = SwipeHandler()
     private var activated = false
     private val inputAreaPosition = IntArray(2)
-    private var hintAnimation: AnimatorSet? = null
+    private var hintAnimator: AnimatorSet? = null
     private val hoverViewMargin = resources.getDimensionPixelSize(R.dimen.hoverView_margin)
     private var hoverViewStyle = R.style.XcoRp_Style_SwipePicker_HoverView
     private val hoverViewLayoutParams by lazy { createHoverViewLayoutParams() }
@@ -263,6 +270,8 @@ class SwipePicker : LinearLayout {
                 R.styleable.SwipePicker_android_state_activated, activated)
         allowDeactivate = typedArray
                 .getBoolean(R.styleable.SwipePicker_allowDeactivate, allowDeactivate)
+        allowFling = typedArray
+                .getBoolean(R.styleable.SwipePicker_allowFling, allowFling)
         setHintTextAppearance(typedArray.getResourceId(
                 R.styleable.SwipePicker_hintTextAppearance,
                 R.style.XcoRp_TextAppearance_SwipePicker_Hint))
@@ -418,11 +427,13 @@ class SwipePicker : LinearLayout {
     }
 
     override fun onSaveInstanceState(): Parcelable {
-        hintAnimation?.end() // end animation before save
+        hintAnimator?.end() // end animation before save
         val state = SavedState(super.onSaveInstanceState())
 
         state.allowDeactivate = allowDeactivate
+        state.allowFling = allowFling
         state.manualInput = manualInput
+        state.stickyScale = stickyScale
         state.scale = scale
         state.minValue = minValue
         state.maxValue = maxValue
@@ -441,7 +452,9 @@ class SwipePicker : LinearLayout {
         }
 
         allowDeactivate = state.allowDeactivate
+        allowFling = state.allowFling
         manualInput = state.manualInput
+        stickyScale = state.stickyScale
         scale = state.scale
         minValue = state.minValue
         maxValue = state.maxValue
@@ -450,7 +463,7 @@ class SwipePicker : LinearLayout {
         isActivated = state.activated
         isSelected = state.selected
 
-        hintAnimation?.end() // end animation before restore
+        hintAnimator?.end() // end animation before restore
         super.onRestoreInstanceState(state.superState)
     }
 
@@ -458,11 +471,11 @@ class SwipePicker : LinearLayout {
         super.onLayout(changed, left, top, right, bottom)
 
         if (changed) {
-            val instantly = hintAnimation?.isRunning != true
+            val instantly = hintAnimator?.isRunning != true
 
             animateHint(isActivated)
             if (instantly) {
-                hintAnimation?.end()
+                hintAnimator?.end()
             }
 
             if (isPressed) {
@@ -479,12 +492,15 @@ class SwipePicker : LinearLayout {
         return true
     }
 
+    @Suppress("UNUSED_PARAMETER")
     private fun onTouch(view: View, event: MotionEvent): Boolean {
-        val result = gestureDetector.onTouchEvent(event)
-        if (event.action == ACTION_UP || event.action == ACTION_CANCEL) {
-            handler.removeCallbacksAndMessages(gestureDetector)
-            view.playSoundEffect(CLICK)
-            isPressed = false
+        var result = gestureDetector.onTouchEvent(event)
+        if (!result) {
+            if (event.action == ACTION_UP) {
+                scrollHandler.finishFling()
+                hidePress()
+                result = true
+            }
         }
         return result
     }
@@ -506,13 +522,13 @@ class SwipePicker : LinearLayout {
     }
 
     private fun animateHint(activated: Boolean) {
-        hintAnimation?.removeAllListeners()
-        hintAnimation?.cancel()
+        hintAnimator?.removeAllListeners()
+        hintAnimator?.cancel()
 
         val yPosition = calculateHintPosition(activated)
         val fontScale = calculateFontScale(activated)
 
-        hintAnimation = if (activated) {
+        hintAnimator = if (activated) {
             createHintAnimation(yPosition, fontScale).addEndListener {
                 super.setActivated(activated)
                 setInputVisible(true)
@@ -523,7 +539,7 @@ class SwipePicker : LinearLayout {
                 setInputVisible(false)
             }
         }
-        hintAnimation?.start()
+        hintAnimator?.start()
     }
 
     private fun createHintAnimation(y: Float, scale: Float): AnimatorSet {
@@ -604,6 +620,18 @@ class SwipePicker : LinearLayout {
         return false
     }
 
+    private fun showPress() {
+        handler.removeCallbacksAndMessages(hoverView)
+        isPressed = true
+    }
+
+    private fun hidePress() {
+        playSoundEffect(CLICK)
+
+        handler.removeCallbacksAndMessages(hoverView)
+        isPressed = false
+    }
+
     override fun setPressed(pressed: Boolean) {
         if (pressed == isPressed) return
 
@@ -611,7 +639,7 @@ class SwipePicker : LinearLayout {
             hintTextView.alpha = 0f // hide hint immediately
 
             isActivated = true
-            hintAnimation?.end()
+            hintAnimator?.end()
         }
 
         super.setPressed(pressed)
@@ -668,11 +696,11 @@ class SwipePicker : LinearLayout {
             val insertion = -index - 1
             return when (insertion) {
             // outside value from left side
-                0 -> swipeHandler.closestInBoundary(scale.first(), step, minValue, value)
+                0 -> scaleHelper.closestInBoundary(scale.first(), step, minValue, value)
             // outside value from right side
-                scale.size -> swipeHandler.closestInBoundary(scale.last(), step, maxValue, value)
+                scale.size -> scaleHelper.closestInBoundary(scale.last(), step, maxValue, value)
             // value on scale
-                else -> swipeHandler.closestValue(scale[insertion - 1], scale[insertion], value)
+                else -> scaleHelper.closestValue(scale[insertion - 1], scale[insertion], value)
             }
         }
         return value
@@ -698,8 +726,8 @@ class SwipePicker : LinearLayout {
          * @return Converted internal value or {@code null}.
          * If null then input mode don't disable and value not apply.
          */
-        fun transform(view: SwipePicker, value: String): Float? {
-            return value.toFloatOrNull() ?: view.value
+        fun transform(view: SwipePicker, value: String): Float? = with(view) {
+            return value.toFloatOrNull() ?: this.value
         }
 
         /**
@@ -709,8 +737,8 @@ class SwipePicker : LinearLayout {
          * @return Converted display value or {@code null}.
          * If null then set empty value.
          */
-        fun transform(view: SwipePicker, value: Float): String? {
-            return view.numberFormat.format(value)
+        fun transform(view: SwipePicker, value: Float): String? = with(view) {
+            return numberFormat.format(value)
         }
     }
 
@@ -748,15 +776,16 @@ class SwipePicker : LinearLayout {
          * @return The calculated value after the gesture processing which must be set to the view.
          */
         fun onSwipe(view: SwipePicker, value: Float, division: Int): Float = with(view) {
-            val params = Params(scale, step)
-            return swipeHandler.onSwipe(params, value, division)
+            return scaleHelper.moveTo(scale, step, value, division)
         }
     }
 
     private class SavedState : BaseSavedState {
 
         var allowDeactivate = true
+        var allowFling = true
         var manualInput = true
+        var stickyScale = false
         var scale: List<Float>? = null
         var minValue = -Float.MAX_VALUE
         var maxValue = Float.MAX_VALUE
@@ -769,7 +798,9 @@ class SwipePicker : LinearLayout {
 
         constructor(parcel: Parcel) : super(parcel) {
             allowDeactivate = parcel.readByte() != 0.toByte()
+            allowFling = parcel.readByte() != 0.toByte()
             manualInput = parcel.readByte() != 0.toByte()
+            stickyScale = parcel.readByte() != 0.toByte()
             @Suppress("UNCHECKED_CAST")
             scale = parcel.readSerializable() as List<Float>?
             minValue = parcel.readFloat()
@@ -783,7 +814,9 @@ class SwipePicker : LinearLayout {
         override fun writeToParcel(parcel: Parcel, flags: Int) {
             super.writeToParcel(parcel, flags)
             parcel.writeByte(if (allowDeactivate) 1 else 0)
+            parcel.writeByte(if (allowFling) 1 else 0)
             parcel.writeByte(if (manualInput) 1 else 0)
+            parcel.writeByte(if (stickyScale) 1 else 0)
             parcel.writeSerializable(scale as Serializable?)
             parcel.writeFloat(minValue)
             parcel.writeFloat(maxValue)
@@ -806,36 +839,18 @@ class SwipePicker : LinearLayout {
 
     private inner class GestureListener : GestureDetector.SimpleOnGestureListener() {
 
-        private val swipeThreshold = resources.getDimensionPixelSize(R.dimen.swipePicker_swipeThreshold)
-
-        private var isShowPress = false
-
-        private var initialValue = 0f
-        private var previousDivision = 0
-
         override fun onDown(event: MotionEvent): Boolean {
-            isShowPress = false
+            scrollHandler.startFrom(value)
 
-            initialValue = value
-            previousDivision = 0
-
-            handler.postAtTime(::onShowPress,
-                    gestureDetector, event.downTime + DELAY_SHOW_PRESS)
+            // Use it because onShowPress(MotionEvent e) causes wrong behavior.
+            handler.postAtTime(::showPress,
+                    hoverView, event.downTime + PRESS_DELAY_SHOW)
 
             return true
         }
 
-        /**
-         * Use it because SimpleOnGestureListener#onShowPress(MotionEvent e)
-         * causes flicker and wrong behavior.
-         */
-        fun onShowPress() {
-            isPressed = true
-            isShowPress = true
-        }
-
         override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
-            if (!isShowPress) {
+            if (!isPressed) {
                 isSelected = true
                 return true
             }
@@ -851,15 +866,93 @@ class SwipePicker : LinearLayout {
         }
 
         override fun onScroll(e1: MotionEvent, e2: MotionEvent, distanceX: Float, distanceY: Float): Boolean {
-            val division = Math.round((e2.x - e1.x) / swipeThreshold)
+            scrollHandler.scrollTo(e2.x - e1.x)
+            return isPressed
+        }
 
-            if (previousDivision != division) {
-                if (!isPressed) onShowPress()
+        override fun onFling(e1: MotionEvent, e2: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
+            if (allowFling) {
+                val velocity = (velocityX / VELOCITY_DOWNSCALE).toInt()
+                if (Math.abs(velocity) > VELOCITY_THRESHOLD) {
+                    scrollHandler.startFrom(value).flingWith(velocity)
+                    return true
+                }
+            }
+            return false
+        }
+    }
+
+    private inner class ScrollHandler {
+
+        private val swipeThreshold = resources.getDimensionPixelSize(R.dimen.swipePicker_swipeThreshold)
+
+        private val scroller by lazy { createScroller() }
+        private val animator by lazy { createAnimator() }
+
+        private var initialValue = 0f
+        private var lastDivision = 0
+
+        fun startFrom(value: Float): ScrollHandler {
+            finishFling()
+
+            initialValue = value
+            lastDivision = 0
+
+            return this
+        }
+
+        fun scrollTo(distance: Float) {
+            val division = Math.round(distance / swipeThreshold)
+
+            if (lastDivision != division) {
+                showPress()
                 value = swipeListener.onSwipe(this@SwipePicker, initialValue, division)
             }
 
-            previousDivision = division
-            return isPressed
+            lastDivision = division
+        }
+
+        fun flingWith(velocity: Int) {
+            scroller.fling(0, 0, velocity, 0,
+                    Integer.MIN_VALUE, Integer.MAX_VALUE, 0, 0)
+
+            animator.duration = scroller.duration.toLong()
+            animator.start()
+        }
+
+        fun finishFling() {
+            if (allowFling) {
+                scroller.forceFinished(true)
+            }
+        }
+
+        private fun createScroller() = Scroller(context, null, true)
+
+        private fun createAnimator(): ValueAnimator {
+            val result = ValueAnimator.ofFloat(0f, 1f)
+
+            result.addUpdateListener {
+                if (scroller.isFinished) {
+                    animator.cancel()
+                    return@addUpdateListener
+                }
+
+                scroller.computeScrollOffset()
+                scrollTo(scroller.currX.toFloat())
+
+                if (value == minValue || value == maxValue) {
+                    finishFling()
+                }
+            }
+
+            result.addListener(object : AnimatorListenerAdapter() {
+                override fun onAnimationEnd(animation: Animator?) {
+                    handler.postAtTime(::hidePress, hoverView,
+                            SystemClock.uptimeMillis() + PRESS_DELAY_HIDE)
+                }
+            })
+
+            return result
         }
     }
 

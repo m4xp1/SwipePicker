@@ -8,6 +8,7 @@
         <attr name="android:hint" />
         <attr name="android:state_activated" />
         <attr name="allowDeactivate" format="boolean" />
+        <attr name="allowFling" format="boolean" />
         <attr name="hintTextAppearance" format="reference" />
         <attr name="inputTextAppearance" format="reference" />
         <attr name="backgroundInput" format="color|reference" />
