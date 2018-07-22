@@ -717,6 +717,17 @@ class SwipePicker : LinearLayout {
         }
     }
 
+    override fun onDetachedFromWindow() {
+        scrollHandler.finishFling()
+        handler.removeCallbacksAndMessages(hoverView)
+
+        if (hoverView.parent != null) {
+            windowManager.removeViewImmediate(hoverView)
+        }
+
+        super.onDetachedFromWindow()
+    }
+
     interface ValueTransformer {
 
         /**
@@ -947,8 +958,10 @@ class SwipePicker : LinearLayout {
 
             result.addListener(object : AnimatorListenerAdapter() {
                 override fun onAnimationEnd(animation: Animator?) {
-                    handler.postAtTime(::hidePress, hoverView,
-                            SystemClock.uptimeMillis() + PRESS_DELAY_HIDE)
+                    if (windowVisibility == View.VISIBLE) {
+                        handler.postAtTime(::hidePress, hoverView,
+                                SystemClock.uptimeMillis() + PRESS_DELAY_HIDE)
+                    }
                 }
             })
 
