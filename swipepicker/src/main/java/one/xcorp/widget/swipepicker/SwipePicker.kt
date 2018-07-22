@@ -18,8 +18,6 @@ import android.support.v4.widget.TextViewCompat
 import android.support.v7.widget.AppCompatTextView
 import android.text.InputFilter
 import android.text.InputType
-import android.text.method.DigitsKeyListener
-import android.text.method.KeyListener
 import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.*
@@ -108,11 +106,6 @@ class SwipePicker : LinearLayout {
         get() = inputEditText.inputType
         set(value) {
             inputEditText.inputType = value
-        }
-    var keyListener: KeyListener?
-        get() = inputEditText.keyListener
-        set(value) {
-            inputEditText.keyListener = value
         }
     var stickyScale = false
         set(enable) {
@@ -293,10 +286,6 @@ class SwipePicker : LinearLayout {
                 resources.getInteger(R.integer.swipePicker_maxLength)))
         inputType = typedArray.getInt(
                 R.styleable.SwipePicker_android_inputType, InputType.TYPE_CLASS_NUMBER)
-        if (typedArray.hasValue(R.styleable.SwipePicker_android_digits)) {
-            keyListener = DigitsKeyListener
-                    .getInstance(typedArray.getString(R.styleable.SwipePicker_android_digits))
-        }
         stickyScale = typedArray.getBoolean(R.styleable.SwipePicker_stickyScale, stickyScale)
         if (!isInEditMode && typedArray.hasValue(R.styleable.SwipePicker_scale)) {
             scale = typedArray.getFloatArray(R.styleable.SwipePicker_scale).toList()
