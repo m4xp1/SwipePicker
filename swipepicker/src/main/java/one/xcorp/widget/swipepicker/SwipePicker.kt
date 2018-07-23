@@ -211,6 +211,12 @@ class SwipePicker : LinearLayout {
         isChildrenDrawingOrderEnabled = true
 
         inflate(context, R.layout.swipe_picker, this)
+        // android still save text selection when set saveEnabled=false
+        // for symmetry we will make unique id for all
+        hintTextView.id = id + hintTextView.id
+        inputAreaView.id = id + inputAreaView.id
+        inputEditText.id = id + inputEditText.id
+
         obtainStyledAttributes(context, attrs, defStyleAttr, defStyleRes)
 
         inputAreaView.setOnTouchListener(::onTouch)
@@ -597,7 +603,6 @@ class SwipePicker : LinearLayout {
 
     private fun onInputDone(view: TextView, actionId: Int, event: KeyEvent?): Boolean {
         if (actionId == EditorInfo.IME_ACTION_DONE || event?.keyCode == KeyEvent.KEYCODE_ENTER) {
-            playSoundEffect(CLICK)
             val result = valueTransformer.transform(this, view.text.toString())
             if (result == null) {
                 inputEditText.selectAll()
@@ -605,6 +610,7 @@ class SwipePicker : LinearLayout {
                 value = result
                 isSelected = false
             }
+            playSoundEffect(CLICK)
             return true
         }
         return false
