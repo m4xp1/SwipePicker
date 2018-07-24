@@ -16,16 +16,14 @@ internal class ScaleHelper {
             if (Math.abs(value - left) <= Math.abs(right - value)) left else right
 
     /**
-     * Automatically completes the scale to the value and determines
-     * the closest value on the scale.
+     * Constructed the scale to the value and determines the closest value on the scale.
      *
-     * @param boundary The end value of the scale from which
-     * you want to complete the scale with the specified step.
-     * @param step Step with which the scale is completed. If step is equal 0 then return boundary.
-     * @param value The value for which to search for the closest on the scale.
-     * @return Closest value on the virtual scale. The closest values to the boundary in priority.
+     * @param boundary The value from which the scale will be constructed to the specified value.
+     * @param step Step with which the scale is constructed, if step equal 0 then return boundary.
+     * @param value The value for which the closest on the scale will be searched.
+     * @return Closest value on scale, the closest values to the boundary in priority.
      */
-    fun closestInBoundary(boundary: Float, step: Float, value: Float): Float {
+    fun closestOnScale(boundary: Float, step: Float, value: Float): Float {
         if (step == 0f) return boundary
 
         // rounding to the closest to the boundary
@@ -37,7 +35,34 @@ internal class ScaleHelper {
     }
 
     /**
-     * Move on the scale from the value to the specified division.
+     * Attracts a value to the scale.
+     *
+     * @param scale The scale in which you must move.
+     * If {@code null} then do nothing and return specified value.
+     * @param step Step with which the scale is constructed, if step equal 0 then return
+     * boundary if the value lies outside the boundary of the scale.
+     * @param value The value for which the closest on the scale will be searched.
+     * @return Closest value on scale, the closest values to the scale boundary in priority.
+     */
+    fun stickToScale(scale: List<Float>?, step: Float, value: Float): Float {
+        if (scale == null) return value
+        // find value on the scale
+        val index = scale.binarySearch(value)
+        if (index >= 0) return value
+        // value does not belong to the scale, we find the closest
+        val insertion = -index - 1
+        return when (insertion) {
+        // outside value from left side
+            0 -> closestOnScale(scale.first(), step, value)
+        // outside value from right side
+            scale.size -> closestOnScale(scale.last(), step, value)
+        // value on scale
+            else -> closestValue(scale[insertion - 1], scale[insertion], value)
+        }
+    }
+
+    /**
+     * Move by scale from the value to the specified division.
      *
      * @param scale The scale in which you must move.
      * Сan be {@code null} if you only need to take into account the step.
@@ -47,17 +72,17 @@ internal class ScaleHelper {
      * @param division The number of divisions that have moved.
      * @return The calculated value for specified division.
      */
-    fun moveTo(scale: List<Float>?, step: Float, value: Float, division: Int): Float {
+    fun moveToDivision(scale: List<Float>?, step: Float, value: Float, division: Int): Float {
         if (division == 0) return value
         // the scale is not specified, calculate the value based on the step
-        if (scale == null) return moveByStep(value, division, step)
+        if (scale == null) return moveByStep(step, value, division)
         // movement outside the scale without crossing it
         if ((value < scale.first() && division < 0) || (value > scale.last() && division > 0)) {
-            return moveOutside(scale, value, division, step)
+            return moveByScaleOutside(scale, step, value, division)
         }
         // movement outside the scale with a possible intersection of scale
         if (value !in scale.first()..scale.last()) {
-            return moveInside(scale, value, division, step)
+            return moveByScaleInside(scale, step, value, division)
         }
         // Finding the index of the value on the scale. If the value is not found
         // returns the index of the nearest value taking into account the direction of the gesture.
@@ -67,13 +92,13 @@ internal class ScaleHelper {
             index = -(index + offset)
         }
         // the value index lies on the scale, we move along it
-        return moveByScale(scale, index, division, step)
+        return moveByScale(scale, step, index, division)
     }
 
-    private fun moveByStep(value: Float, division: Int, step: Float) =
+    private fun moveByStep(step: Float, value: Float, division: Int) =
             (value.toBigDecimal() + division.toBigDecimal() * step.toBigDecimal()).toFloat()
 
-    private fun moveOutside(scale: List<Float>, value: Float, division: Int, step: Float): Float {
+    private fun moveByScaleOutside(scale: List<Float>, step: Float, value: Float, division: Int): Float {
         // outward movement is impossible
         if (step == 0f) return value
 
@@ -82,17 +107,17 @@ internal class ScaleHelper {
 
         // Attract to the value on the scale
         if (division < 0) { // direction right to left
-            closestValue = closestInBoundary(scale.first(), step, value)
+            closestValue = closestOnScale(scale.first(), step, value)
             offset = if (closestValue < value) 1 else 0
         } else { // direction left to right
-            closestValue = closestInBoundary(scale.last(), step, value)
+            closestValue = closestOnScale(scale.last(), step, value)
             offset = if (closestValue > value) -1 else 0
         }
         // calculate the value based on the step from closest value
-        return moveByStep(closestValue, division + offset, step)
+        return moveByStep(step, closestValue, division + offset)
     }
 
-    private fun moveInside(scale: List<Float>, value: Float, division: Int, step: Float): Float {
+    private fun moveByScaleInside(scale: List<Float>, step: Float, value: Float, division: Int): Float {
         val boundaryIndex: Int
         val offset: Int
 
@@ -104,25 +129,26 @@ internal class ScaleHelper {
             offset = 1
         }
         // if step 0 means we are attracted to the boundary of the scale and move along it
-        if (step == 0f) return moveByScale(scale, boundaryIndex, division + offset, step)
+        if (step == 0f) return moveByScale(scale, step, boundaryIndex, division + offset)
+
         val distance = ((value - scale[boundaryIndex]) / step)
         // the number of divisions up to the scale of values remaining after the move
         val remainder = division + distance
                 .toBigDecimal().setScale(0, RoundingMode.UP).toInt()
         // move from the scale outwards or along it, depending on the sign of the remainder
-        return moveByScale(scale, boundaryIndex, remainder, step)
+        return moveByScale(scale, step, boundaryIndex, remainder)
     }
 
-    private fun moveByScale(scale: List<Float>, index: Int, division: Int, step: Float): Float {
+    private fun moveByScale(scale: List<Float>, step: Float, index: Int, division: Int): Float {
         val destination = index + division
 
         return when {
         // move on the scale outwards to the left
             destination < 0 ->
-                moveByStep(scale.first(), destination, step)
+                moveByStep(step, scale.first(), destination)
         // move on the scale outwards to the right
             destination > scale.lastIndex ->
-                moveByStep(scale.last(), (destination - scale.lastIndex), step)
+                moveByStep(step, scale.last(), (destination - scale.lastIndex))
         // move on the scale
             else -> scale[destination]
         }
