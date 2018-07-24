@@ -12,7 +12,7 @@ internal class ScaleHelper {
      * @param value The value for which to search for the closest.
      * @return Closest value left or right. The left value in priority.
      */
-    fun closestValue(left: Float, right: Float, value: Float) =
+    fun getClosestValue(left: Float, right: Float, value: Float) =
             if (Math.abs(value - left) <= Math.abs(right - value)) left else right
 
     /**
@@ -23,7 +23,7 @@ internal class ScaleHelper {
      * @param value The value for which the closest on the scale will be searched.
      * @return Closest value on scale, the closest values to the boundary in priority.
      */
-    fun closestOnScale(boundary: Float, step: Float, value: Float): Float {
+    fun getClosestOnScale(boundary: Float, step: Float, value: Float): Float {
         if (step == 0f) return boundary
 
         // rounding to the closest to the boundary
@@ -53,11 +53,11 @@ internal class ScaleHelper {
         val insertion = -index - 1
         return when (insertion) {
         // outside value from left side
-            0 -> closestOnScale(scale.first(), step, value)
+            0 -> getClosestOnScale(scale.first(), step, value)
         // outside value from right side
-            scale.size -> closestOnScale(scale.last(), step, value)
+            scale.size -> getClosestOnScale(scale.last(), step, value)
         // value on scale
-            else -> closestValue(scale[insertion - 1], scale[insertion], value)
+            else -> getClosestValue(scale[insertion - 1], scale[insertion], value)
         }
     }
 
@@ -107,10 +107,10 @@ internal class ScaleHelper {
 
         // Attract to the value on the scale
         if (division < 0) { // direction right to left
-            closestValue = closestOnScale(scale.first(), step, value)
+            closestValue = getClosestOnScale(scale.first(), step, value)
             offset = if (closestValue < value) 1 else 0
         } else { // direction left to right
-            closestValue = closestOnScale(scale.last(), step, value)
+            closestValue = getClosestOnScale(scale.last(), step, value)
             offset = if (closestValue > value) -1 else 0
         }
         // calculate the value based on the step from closest value

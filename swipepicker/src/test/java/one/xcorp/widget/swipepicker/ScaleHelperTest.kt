@@ -9,27 +9,27 @@ class ScaleHelperTest {
     private val scaleHelper = ScaleHelper()
 
     @Test
-    fun closestValue() = with(scaleHelper) {
-        assertEquals(closestValue(1f, 3f, 2f), 1f)
-        assertEquals(closestValue(1f, 3f, 2.1f), 3f)
+    fun getClosestValue() = with(scaleHelper) {
+        assertEquals(getClosestValue(1f, 3f, 2f), 1f)
+        assertEquals(getClosestValue(1f, 3f, 2.1f), 3f)
 
-        assertEquals(closestValue(-1f, -3f, -2f), -1f)
-        assertEquals(closestValue(-1f, -3f, -2.1f), -3f)
+        assertEquals(getClosestValue(-1f, -3f, -2f), -1f)
+        assertEquals(getClosestValue(-1f, -3f, -2.1f), -3f)
     }
 
     @Test
-    fun closestOnScale() = with(scaleHelper) {
-        assertEquals(closestOnScale(-2f, 0f, -5f), -2f)
-        assertEquals(closestOnScale(3.5f, 0f, 10f), 3.5f)
+    fun getClosestOnScale() = with(scaleHelper) {
+        assertEquals(getClosestOnScale(-2f, 0f, -5f), -2f)
+        assertEquals(getClosestOnScale(3.5f, 0f, 10f), 3.5f)
 
-        assertEquals(closestOnScale(-2f, 1.5f, -3.5f), -3.5f)
-        assertEquals(closestOnScale(3.5f, 1.5f, 6.5f), 6.5f)
+        assertEquals(getClosestOnScale(-2f, 1.5f, -3.5f), -3.5f)
+        assertEquals(getClosestOnScale(3.5f, 1.5f, 6.5f), 6.5f)
 
-        assertEquals(closestOnScale(-2f, 1.5f, -8.75f), -8f)
-        assertEquals(closestOnScale(3.5f, 1.5f, 13.25f), 12.5f)
+        assertEquals(getClosestOnScale(-2f, 1.5f, -8.75f), -8f)
+        assertEquals(getClosestOnScale(3.5f, 1.5f, 13.25f), 12.5f)
 
-        assertEquals(closestOnScale(-2f, 1.5f, -8.76f), -9.5f)
-        assertEquals(closestOnScale(3.5f, 1.5f, 13.26f), 14f)
+        assertEquals(getClosestOnScale(-2f, 1.5f, -8.76f), -9.5f)
+        assertEquals(getClosestOnScale(3.5f, 1.5f, 13.26f), 14f)
     }
 
     @Test
