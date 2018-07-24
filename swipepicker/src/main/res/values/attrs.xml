@@ -24,12 +24,13 @@
         <attr name="manualInput" format="boolean" />
         <attr name="android:maxLength" />
         <attr name="android:inputType" />
-        <attr name="stickyScale" format="boolean" />
         <attr name="scale" format="reference" />
         <attr name="minValue" format="float" />
         <attr name="maxValue" format="float" />
         <attr name="step" format="float" />
         <attr name="value" format="float" />
+        <attr name="sticky" format="boolean" />
+        <attr name="looped" format="boolean" />
         <attr name="hoverViewStyle" format="reference" />
     </declare-styleable>
 

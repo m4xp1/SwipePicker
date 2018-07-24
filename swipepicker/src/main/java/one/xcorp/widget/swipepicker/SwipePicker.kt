@@ -107,13 +107,6 @@ class SwipePicker : LinearLayout {
         set(value) {
             inputEditText.inputType = value
         }
-    var stickyScale = false
-        set(enable) {
-            field = enable
-            if (enable && scale != null) {
-                value = value // stick value to scale
-            }
-        }
     var scale: List<Float>? = null
         set(scale) {
             if (scale == null) {
@@ -126,7 +119,7 @@ class SwipePicker : LinearLayout {
             }
 
             field = scale.toList()
-            if (stickyScale) {
+            if (sticky) {
                 value = value // stick value to scale
             }
         }
@@ -143,7 +136,7 @@ class SwipePicker : LinearLayout {
     var step = 1f
         set(step) {
             field = step
-            if (stickyScale && scale != null) {
+            if (sticky && scale != null) {
                 value = value // stick value to scale
             }
         }
@@ -152,8 +145,8 @@ class SwipePicker : LinearLayout {
             val oldValue = field
             var newValue = value
 
-            if (stickyScale) {
-                newValue = stickToScale(newValue)
+            if (sticky && scale != null) {
+                newValue = scaleHandler.onStick(this, newValue)
             }
 
             if (newValue < minValue) {
@@ -169,6 +162,14 @@ class SwipePicker : LinearLayout {
                 valueChangeListener?.onValueChanged(this, oldValue, newValue)
             }
         }
+    var sticky = false
+        set(enable) {
+            field = enable
+            if (enable && scale != null) {
+                value = value // stick value to scale
+            }
+        }
+    var looped = false
     val hoverView by lazy { createHoverView() }
     // </editor-fold>
 
@@ -190,9 +191,9 @@ class SwipePicker : LinearLayout {
     private val hoverViewLayoutParams by lazy { createHoverViewLayoutParams() }
 
     private var valueTransformer: ValueTransformer = object : ValueTransformer {}
+    private var scaleHandler: ScaleHandler = object : ScaleHandler {}
     private var stateChangeListener: OnStateChangeListener? = null
     private var valueChangeListener: OnValueChangeListener? = null
-    private var swipeListener: OnSwipeListener = object : OnSwipeListener {}
 
     constructor(context: Context) : this(context, null)
 
@@ -292,7 +293,6 @@ class SwipePicker : LinearLayout {
                 resources.getInteger(R.integer.swipePicker_maxLength)))
         inputType = typedArray.getInt(
                 R.styleable.SwipePicker_android_inputType, InputType.TYPE_CLASS_NUMBER)
-        stickyScale = typedArray.getBoolean(R.styleable.SwipePicker_stickyScale, stickyScale)
         if (!isInEditMode && typedArray.hasValue(R.styleable.SwipePicker_scale)) {
             scale = typedArray.getFloatArray(R.styleable.SwipePicker_scale).toList()
         }
@@ -301,6 +301,8 @@ class SwipePicker : LinearLayout {
         require(minValue < maxValue) { "The minimum value is greater than the maximum." }
         step = typedArray.getFloat(R.styleable.SwipePicker_step, step)
         value = typedArray.getFloat(R.styleable.SwipePicker_value, value)
+        sticky = typedArray.getBoolean(R.styleable.SwipePicker_sticky, sticky)
+        looped = typedArray.getBoolean(R.styleable.SwipePicker_looped, looped)
         hoverViewStyle = typedArray.getResourceId(
                 R.styleable.SwipePicker_hoverViewStyle, hoverViewStyle)
 
@@ -389,6 +391,13 @@ class SwipePicker : LinearLayout {
         invalidateValue()
     }
 
+    fun setScaleHandler(handler: ScaleHandler) {
+        scaleHandler = handler
+        if (sticky && scale != null) {
+            value = value // stick value to scale
+        }
+    }
+
     fun setOnStateChangeListener(listener: (isActivated: Boolean) -> Unit) =
             setOnStateChangeListener(object : OnStateChangeListener {
                 override fun onStateChanged(view: SwipePicker, isActivated: Boolean) {
@@ -411,17 +420,6 @@ class SwipePicker : LinearLayout {
         valueChangeListener = listener
     }
 
-    fun setOnSwipeListener(listener: (value: Float, division: Int) -> Float) =
-            setOnSwipeListener(object : OnSwipeListener {
-                override fun onSwipe(view: SwipePicker, value: Float, division: Int): Float {
-                    return listener(value, division)
-                }
-            })
-
-    fun setOnSwipeListener(listener: OnSwipeListener) {
-        swipeListener = listener
-    }
-
     override fun onSaveInstanceState(): Parcelable {
         hintAnimator?.end() // end animation before save
         val state = SavedState(super.onSaveInstanceState())
@@ -429,12 +427,13 @@ class SwipePicker : LinearLayout {
         state.allowDeactivate = allowDeactivate
         state.allowFling = allowFling
         state.manualInput = manualInput
-        state.stickyScale = stickyScale
         state.scale = scale
         state.minValue = minValue
         state.maxValue = maxValue
         state.step = step
         state.value = value
+        state.sticky = sticky
+        state.looped = looped
         state.activated = isActivated
         state.selected = isSelected
 
@@ -450,12 +449,13 @@ class SwipePicker : LinearLayout {
         allowDeactivate = state.allowDeactivate
         allowFling = state.allowFling
         manualInput = state.manualInput
-        stickyScale = state.stickyScale
         scale = state.scale
         minValue = state.minValue
         maxValue = state.maxValue
         step = state.step
         value = state.value
+        sticky = state.sticky
+        looped = state.looped
         isActivated = state.activated
         isSelected = state.selected
 
@@ -494,7 +494,8 @@ class SwipePicker : LinearLayout {
         if (!result) {
             if (event.action == ACTION_UP) {
                 scrollHandler.finishFling()
-                hidePress()
+                playSoundEffect(CLICK)
+                isPressed = false
                 result = true
             }
         }
@@ -623,19 +624,10 @@ class SwipePicker : LinearLayout {
         }
     }
 
-    private fun showPress() {
-        handler.removeCallbacksAndMessages(hoverView)
-        isPressed = true
-    }
-
-    private fun hidePress() {
-        playSoundEffect(CLICK)
-
-        handler.removeCallbacksAndMessages(hoverView)
-        isPressed = false
-    }
-
     override fun setPressed(pressed: Boolean) {
+        // remove all future events associated with changing the state
+        handler.removeCallbacksAndMessages(hoverView)
+
         if (pressed == isPressed) return
 
         if (pressed && !isActivated) {
@@ -658,27 +650,21 @@ class SwipePicker : LinearLayout {
         invalidateHoverViewPosition()
 
         hintTextView.animate().alpha(0f).setDuration(ANIMATION_DURATION).start()
-        hoverView.animate().alpha(1f).setDuration(ANIMATION_DURATION)
-                .setListener(object : AnimatorListenerAdapter() {
-                    override fun onAnimationStart(animation: Animator) {
-                        if (hoverView.parent == null) {
-                            windowManager.addView(hoverView, hoverViewLayoutParams)
-                        }
-                    }
-                }).start()
+        hoverView.animate().alpha(1f).setDuration(ANIMATION_DURATION).start()
+
+        if (hoverView.parent == null) {
+            windowManager.addView(hoverView, hoverViewLayoutParams)
+        }
     }
 
     private fun hideHoverView() {
         // animate with duration 0 to undo the previous animation
         hintTextView.animate().alpha(1f).setDuration(0).start()
-        hoverView.animate().alpha(0f).setDuration(0)
-                .setListener(object : AnimatorListenerAdapter() {
-                    override fun onAnimationEnd(animation: Animator) {
-                        if (hoverView.parent != null) {
-                            windowManager.removeViewImmediate(hoverView)
-                        }
-                    }
-                }).start()
+        hoverView.animate().alpha(0f).setDuration(0).start()
+
+        if (hoverView.parent != null) {
+            windowManager.removeViewImmediate(hoverView)
+        }
     }
 
     private fun invalidateHoverViewPosition() {
@@ -689,27 +675,6 @@ class SwipePicker : LinearLayout {
                 inputAreaView.width / 2f - hoverView.measuredWidth / 2f
         hoverView.y = inputAreaPosition[1] -
                 hoverView.measuredHeight - hoverViewMargin.toFloat()
-    }
-
-    private fun stickToScale(value: Float): Float {
-        scale?.let { scale ->
-            val index = scale.binarySearch(value)
-            if (index >= 0) return value
-
-            val insertion = -index - 1
-            val closestValue = when (insertion) {
-            // outside value from left side
-                0 -> scaleHelper.closestInBoundary(scale.first(), step, value)
-            // outside value from right side
-                scale.size -> scaleHelper.closestInBoundary(scale.last(), step, value)
-            // value on scale
-                else -> scaleHelper.closestValue(scale[insertion - 1], scale[insertion], value)
-            }
-            // we are attracted to the limit if it is closer
-            return floatArrayOf(closestValue, minValue, maxValue)
-                    .reduce { r, i -> scaleHelper.closestValue(r, i, value) }
-        }
-        return value
     }
 
     private fun invalidateValue() {
@@ -725,11 +690,7 @@ class SwipePicker : LinearLayout {
 
     override fun onDetachedFromWindow() {
         scrollHandler.finishFling()
-        handler.removeCallbacksAndMessages(hoverView)
-
-        if (hoverView.parent != null) {
-            windowManager.removeViewImmediate(hoverView)
-        }
+        isPressed = false
 
         super.onDetachedFromWindow()
     }
@@ -759,6 +720,35 @@ class SwipePicker : LinearLayout {
         }
     }
 
+    interface ScaleHandler {
+
+        /**
+         * Handling of stick the value to a scale.
+         *
+         * @param view SwipePicker of initiating event.
+         * @param value The value for which is searched closest on the scale.
+         * @return Closest value on scale, given the limit.
+         */
+        fun onStick(view: SwipePicker, value: Float): Float = with(view) {
+            val closestValue = scaleHelper.stickToScale(scale, step, value)
+            // we are attracted to the limit if it is closer
+            return floatArrayOf(closestValue, minValue, maxValue)
+                    .reduce { r, i -> scaleHelper.getClosestValue(r, i, value) }
+        }
+
+        /**
+         * Handling a swipe gesture.
+         *
+         * @param view SwipePicker of initiating event.
+         * @param value The value from which need moved.
+         * @param division The number of divisions that have moved.
+         * @return The calculated value after the gesture processing which must be set to the view.
+         */
+        fun onSwipe(view: SwipePicker, value: Float, division: Int): Float = with(view) {
+            return scaleHelper.moveToDivision(scale, step, value, division)
+        }
+    }
+
     interface OnStateChangeListener {
 
         /**
@@ -782,32 +772,18 @@ class SwipePicker : LinearLayout {
         fun onValueChanged(view: SwipePicker, oldValue: Float, newValue: Float)
     }
 
-    interface OnSwipeListener {
-
-        /**
-         * Handling a swipe gesture.
-         *
-         * @param view SwipePicker of initiating event.
-         * @param value The value from which need moved.
-         * @param division The number of divisions that have moved.
-         * @return The calculated value after the gesture processing which must be set to the view.
-         */
-        fun onSwipe(view: SwipePicker, value: Float, division: Int): Float = with(view) {
-            return scaleHelper.moveTo(scale, step, value, division)
-        }
-    }
-
     private class SavedState : BaseSavedState {
 
         var allowDeactivate = true
         var allowFling = true
         var manualInput = true
-        var stickyScale = false
         var scale: List<Float>? = null
         var minValue = -Float.MAX_VALUE
         var maxValue = Float.MAX_VALUE
         var step = 1f
         var value = 1f
+        var sticky = false
+        var looped = false
         var activated = false
         var selected = false
 
@@ -817,13 +793,14 @@ class SwipePicker : LinearLayout {
             allowDeactivate = parcel.readByte() != 0.toByte()
             allowFling = parcel.readByte() != 0.toByte()
             manualInput = parcel.readByte() != 0.toByte()
-            stickyScale = parcel.readByte() != 0.toByte()
             @Suppress("UNCHECKED_CAST")
             scale = parcel.readSerializable() as List<Float>?
             minValue = parcel.readFloat()
             maxValue = parcel.readFloat()
             step = parcel.readFloat()
             value = parcel.readFloat()
+            sticky = parcel.readByte() != 0.toByte()
+            looped = parcel.readByte() != 0.toByte()
             activated = parcel.readByte() != 0.toByte()
             selected = parcel.readByte() != 0.toByte()
         }
@@ -833,12 +810,13 @@ class SwipePicker : LinearLayout {
             parcel.writeByte(if (allowDeactivate) 1 else 0)
             parcel.writeByte(if (allowFling) 1 else 0)
             parcel.writeByte(if (manualInput) 1 else 0)
-            parcel.writeByte(if (stickyScale) 1 else 0)
             parcel.writeSerializable(scale as Serializable?)
             parcel.writeFloat(minValue)
             parcel.writeFloat(maxValue)
             parcel.writeFloat(step)
             parcel.writeFloat(value)
+            parcel.writeByte(if (sticky) 1 else 0)
+            parcel.writeByte(if (looped) 1 else 0)
             parcel.writeByte(if (activated) 1 else 0)
             parcel.writeByte(if (selected) 1 else 0)
         }
@@ -860,7 +838,7 @@ class SwipePicker : LinearLayout {
             scrollHandler.startFrom(value)
 
             // Use it because onShowPress(MotionEvent e) causes wrong behavior.
-            handler.postAtTime(::showPress,
+            handler.postAtTime({ isPressed = true },
                     hoverView, event.downTime + PRESS_DELAY_SHOW)
 
             return true
@@ -922,8 +900,8 @@ class SwipePicker : LinearLayout {
             val division = Math.round(distance / swipeThreshold)
 
             if (lastDivision != division) {
-                showPress()
-                value = swipeListener.onSwipe(this@SwipePicker, initialValue, division)
+                isPressed = true // scroll started, show a pop-up immediately
+                value = scaleHandler.onSwipe(this@SwipePicker, initialValue, division)
             }
 
             lastDivision = division
@@ -951,22 +929,23 @@ class SwipePicker : LinearLayout {
             result.addUpdateListener {
                 if (scroller.isFinished) {
                     animator.cancel()
-                    return@addUpdateListener
-                }
+                } else {
+                    scroller.computeScrollOffset()
+                    scrollTo(scroller.currX.toFloat())
 
-                scroller.computeScrollOffset()
-                scrollTo(scroller.currX.toFloat())
-
-                if (value == minValue || value == maxValue) {
-                    finishFling()
+                    if (!looped && (value == minValue || value == maxValue)) {
+                        finishFling()
+                    }
                 }
             }
 
             result.addListener(object : AnimatorListenerAdapter() {
                 override fun onAnimationEnd(animation: Animator?) {
                     if (windowVisibility == View.VISIBLE) {
-                        handler.postAtTime(::hidePress, hoverView,
-                                SystemClock.uptimeMillis() + PRESS_DELAY_HIDE)
+                        handler.postAtTime({
+                            playSoundEffect(CLICK)
+                            isPressed = false
+                        }, hoverView, SystemClock.uptimeMillis() + PRESS_DELAY_HIDE)
                     }
                 }
             })
