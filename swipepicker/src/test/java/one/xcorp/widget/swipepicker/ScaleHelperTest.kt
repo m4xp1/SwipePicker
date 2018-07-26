@@ -1,6 +1,6 @@
 package one.xcorp.widget.swipepicker
 
-import org.junit.Assert.assertEquals
+import org.junit.Assert.*
 import org.junit.Test
 import kotlin.math.sign
 
@@ -9,27 +9,49 @@ class ScaleHelperTest {
     private val scaleHelper = ScaleHelper()
 
     @Test
-    fun getNumberDivisions() = with(scaleHelper) {
-        assertEquals(getNumberDivisions(0f, -3.5f, -8f), -1)
-        assertEquals(getNumberDivisions(0f, 7f, 11.5f), 1)
+    fun isBelongsToScale() = with(scaleHelper) {
+        val scale = listOf(-2f, -1.99f, -1.34f, -1f, 0f, 0.75f, 1.53f, 3.01f, 3.5f)
 
-        assertEquals(getNumberDivisions(1.5f, -3.5f, -3.5f), 0)
-        assertEquals(getNumberDivisions(1.5f, 7f, 7f), 0)
+        assertTrue(isBelongsToScale(scale, 0f, -1.34f))
+        assertTrue(isBelongsToScale(scale, 0f, 1.53f))
+        assertFalse(isBelongsToScale(scale, 0f, -1.5f))
+        assertFalse(isBelongsToScale(scale, 0f, 2f))
+        assertFalse(isBelongsToScale(scale, 0f, -3.5f))
+        assertFalse(isBelongsToScale(scale, 0f, 8f))
+        assertFalse(isBelongsToScale(scale, 0f, -4f))
+        assertFalse(isBelongsToScale(scale, 0f, 7f))
 
-        assertEquals(getNumberDivisions(1.5f, -3.5f, -8f), -3)
-        assertEquals(getNumberDivisions(1.5f, -4f, -8f), -3)
-        assertEquals(getNumberDivisions(1.5f, -4f, -0.5f), 3)
-
-        assertEquals(getNumberDivisions(1.5f, 7f, 11.5f), 3)
-        assertEquals(getNumberDivisions(1.5f, 7.5f, 11.5f), 3)
-        assertEquals(getNumberDivisions(1.5f, 7.5f, 4f), -3)
+        assertTrue(isBelongsToScale(scale, 1.5f, -1.34f))
+        assertTrue(isBelongsToScale(scale, 1.5f, 1.53f))
+        assertFalse(isBelongsToScale(scale, 1.5f, -1.5f))
+        assertFalse(isBelongsToScale(scale, 1.5f, 2f))
+        assertTrue(isBelongsToScale(scale, 1.5f, -3.5f))
+        assertTrue(isBelongsToScale(scale, 1.5f, 8f))
+        assertFalse(isBelongsToScale(scale, 1.5f, -4f))
+        assertFalse(isBelongsToScale(scale, 1.5f, 7f))
     }
 
     @Test
-    fun getNumberDivisionsOnScale() = with(scaleHelper) {
+    fun getNumberDivisions() = with(scaleHelper) {
+        // move by step
+        assertEquals(getNumberDivisions(null, 0f, -3.5f, -8f), -1)
+        assertEquals(getNumberDivisions(null, 0f, 7f, 11.5f), 1)
+
+        assertEquals(getNumberDivisions(null, 1.5f, -3.5f, -3.5f), 0)
+        assertEquals(getNumberDivisions(null, 1.5f, 7f, 7f), 0)
+
+        assertEquals(getNumberDivisions(null, 1.5f, -3.5f, -8f), -3)
+        assertEquals(getNumberDivisions(null, 1.5f, -4f, -8f), -3)
+        assertEquals(getNumberDivisions(null, 1.5f, -4f, -0.5f), 3)
+
+        assertEquals(getNumberDivisions(null, 1.5f, 7f, 11.5f), 3)
+        assertEquals(getNumberDivisions(null, 1.5f, 7.5f, 11.5f), 3)
+        assertEquals(getNumberDivisions(null, 1.5f, 7.5f, 4f), -3)
+
         assertEquals(getNumberDivisions(null, 0f, 0f, -4.25f), -1)
         assertEquals(getNumberDivisions(null, 0f, 1f, 5f), 1)
 
+        // move by scale
         val scale = listOf(-2f, -1.99f, -1.34f, -1f, 0f, 0.75f, 1.53f, 3.01f, 3.5f)
 
         assertEquals(getNumberDivisions(scale, 0f, 0f, -1.99f), -3)
@@ -72,23 +94,20 @@ class ScaleHelperTest {
     }
 
     @Test
-    fun getClosestOutside() = with(scaleHelper) {
-        assertEquals(getClosestOutside(-2f, 0f, -5f), -2f)
-        assertEquals(getClosestOutside(3.5f, 0f, 10f), 3.5f)
-
-        assertEquals(getClosestOutside(-2f, 1.5f, -3.5f), -3.5f)
-        assertEquals(getClosestOutside(3.5f, 1.5f, 6.5f), 6.5f)
-
-        assertEquals(getClosestOutside(-2f, 1.5f, -8.75f), -8f)
-        assertEquals(getClosestOutside(3.5f, 1.5f, 13.25f), 12.5f)
-
-        assertEquals(getClosestOutside(-2f, 1.5f, -8.76f), -9.5f)
-        assertEquals(getClosestOutside(3.5f, 1.5f, 13.26f), 14f)
-    }
-
-    @Test
     fun stickToScale() = with(scaleHelper) {
         val scale = listOf(-2f, -1.99f, -1.34f, -1f, 0f, 0.75f, 1.53f, 3.01f, 3.5f)
+
+        assertEquals(stickToScale(scale, 0f, -5f), -2f)
+        assertEquals(stickToScale(scale, 0f, 10f), 3.5f)
+
+        assertEquals(stickToScale(scale, 1.5f, -3.5f), -3.5f)
+        assertEquals(stickToScale(scale, 1.5f, 6.5f), 6.5f)
+
+        assertEquals(stickToScale(scale, 1.5f, -8.75f), -8f)
+        assertEquals(stickToScale(scale, 1.5f, 13.25f), 12.5f)
+
+        assertEquals(stickToScale(scale, 1.5f, -8.76f), -9.5f)
+        assertEquals(stickToScale(scale, 1.5f, 13.26f), 14f)
 
         assertEquals(stickToScale(scale, 1.5f, -1.34f), -1.34f)
         assertEquals(stickToScale(scale, 1.5f, 1.53f), 1.53f)
@@ -104,10 +123,11 @@ class ScaleHelperTest {
     }
 
     @Test
-    fun moveByStep() {
+    fun moveToDivision() {
+        // move by step
         SwipeSimulator(null, 0f).assertScale(3.6f, 3.6f, 3.6f, 3.6f)
 
-        val simulator = SwipeSimulator(null, 1.5f)
+        var simulator = SwipeSimulator(null, 1.5f)
         simulator.assertScale(1f, -0.5f, -2f, -3.5f, -5f, -6.5f, -8f, -9.5f)
         simulator.assertScale(1f, 2.5f, 4f, 5.5f, 7f, 8.5f, 10f, 11.5f)
         simulator.assertScale(-3.6f, -5.1f, -6.6f, -8.1f, -9.6f)
@@ -116,11 +136,9 @@ class ScaleHelperTest {
 
         SwipeSimulator(null, 1123.534f).assertScale(
                 -2.6734f, 1120.8606f, 2244.3946f, 3367.9286f, 4491.4626f, 5614.9966f)
-    }
 
-    @Test
-    fun moveBySingleScale() {
-        var simulator = SwipeSimulator(listOf(1f), 0f)
+        // move by single scale
+        simulator = SwipeSimulator(listOf(1f), 0f)
         simulator.assertScale(-1.45f, -1.45f, -1.45f, -1.45f, reverse = false)
         simulator.assertScale(-11.45f, 1f, 1f, 1f, reverse = false)
         simulator.assertScale(2.15f, 2.15f, 2.15f, 2.15f, reverse = false)
@@ -149,13 +167,11 @@ class ScaleHelperTest {
         simulator.assertScale(-0.4565f, -0.5799235f, -0.703347f, -0.8267705f, -0.950194f)
         simulator.assertScale(
                 -0.4f, -0.3330765f, -0.209653f, -0.0862295f, 0.037194f, reverse = false)
-    }
 
-    @Test
-    fun moveByScale() {
+        // move by scale
         val scale = listOf(-2f, -1.99f, -1.34f, -1f, 0f, 0.75f, 1.53f, 3.01f, 3.5f)
 
-        var simulator = SwipeSimulator(scale, 0f)
+        simulator = SwipeSimulator(scale, 0f)
         simulator.assertScale(-1.99f, -2f, -2f, -2f, -2f, reverse = false)
         simulator.assertScale(-1.99999999f, -2f, -2f, -2f, reverse = false)
         simulator.assertScale(-1.99f, -1.34f, -1f, 0f, 0.75f, 1.53f)

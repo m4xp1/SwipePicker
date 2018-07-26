@@ -7,16 +7,26 @@ import kotlin.math.sign
 internal class ScaleHelper {
 
     /**
-     * Calculate divisions between to values.
+     * Allows you to check whether the value belongs the scale.
      *
-     * @param step Step of changing the values on the scale.
-     * If is 0 then meaning between values can be no more than one division.
-     * @param from First value.
-     * @param to Second value.
-     * @param rounding Specifies the offset by modulo if the number of divisions is not exact.
-     * @return Number divisions between values with direction sign.
+     * @param scale The scale in which you must check belongs.
+     * @param step Step with which the scale is constructed, if step equal 0 then return
+     * {@code false} if the value lies outside the boundary of the scale.
+     * @param value The value for which the membership is checked.
+     * @return If value belongs to the scale then return {@code true} otherwise {@code false}.
      */
-    fun getNumberDivisions(step: Float, from: Float, to: Float, rounding: RoundingMode = UP): Int {
+    fun isBelongsToScale(scale: List<Float>, step: Float, value: Float): Boolean {
+        return when {
+        // check outside left
+            value < scale.first() -> (scale.first() - value) % step == 0f
+        // check outside right
+            value > scale.last() -> (value - scale.last()) % step == 0f
+        // check on scale
+            else -> scale.binarySearch(value) > 0
+        }
+    }
+
+    private fun getNumberDivisions(step: Float, from: Float, to: Float, rounding: RoundingMode = UP): Int {
         return if (step == 0f) {
             (to - from).sign.toInt() // single division with direction
         } else {
@@ -85,18 +95,10 @@ internal class ScaleHelper {
     fun getClosestValue(first: Float, second: Float, value: Float) =
             if (Math.abs(value - first) <= Math.abs(second - value)) first else second
 
-    /**
-     * Constructed the scale to the value and determines the closest value on the scale.
-     *
-     * @param boundary The value from which the scale will be constructed to the specified value.
-     * @param step Step with which the scale is constructed, if step equal 0 then return boundary.
-     * @param value The value for which the closest on the scale will be searched.
-     * @return Closest value on scale, the closest values to the boundary in priority.
-     */
-    fun getClosestOutside(boundary: Float, step: Float, value: Float): Float {
+    private fun getClosestOutside(boundary: Float, step: Float, value: Float): Float {
         if (step == 0f) return boundary
 
-        // rounding to the closest to the boundary
+        // rounding to the closest, boundary in priority
         val divisions = getNumberDivisions(step, boundary, value, HALF_DOWN)
         val offsetValue = divisions.toBigDecimal() * step.toBigDecimal()
 
@@ -106,15 +108,13 @@ internal class ScaleHelper {
     /**
      * Attracts a value to the scale.
      *
-     * @param scale The scale in which you must move.
-     * If {@code null} then do nothing and return specified value.
+     * @param scale The scale in which you must stick.
      * @param step Step with which the scale is constructed, if step equal 0 then return
      * boundary if the value lies outside the boundary of the scale.
      * @param value The value for which the closest on the scale will be searched.
      * @return Closest value on scale, the closest values to the scale boundary in priority.
      */
-    fun stickToScale(scale: List<Float>?, step: Float, value: Float): Float {
-        if (scale == null) return value
+    fun stickToScale(scale: List<Float>, step: Float, value: Float): Float {
         // check whether the value is outside
         if (value < scale.first()) { // outside value from left side
             return getClosestOutside(scale.first(), step, value)
@@ -171,10 +171,10 @@ internal class ScaleHelper {
         // Attract to the value on the scale
         if (division < 0) { // direction right to left
             closestValue = getClosestOutside(scale.first(), step, value)
-            offset = if (closestValue < value) 1 else 0
+            offset = if (closestValue < value) 1 else 0 // move one step in the direction
         } else { // direction left to right
             closestValue = getClosestOutside(scale.last(), step, value)
-            offset = if (closestValue > value) -1 else 0
+            offset = if (closestValue > value) -1 else 0 // move one step in the direction
         }
         // calculate the value based on the step from closest value
         return moveByStep(step, closestValue, division + offset)
