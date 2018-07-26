@@ -1,19 +1,89 @@
 package one.xcorp.widget.swipepicker
 
 import java.math.RoundingMode
+import java.math.RoundingMode.*
+import kotlin.math.sign
 
 internal class ScaleHelper {
 
     /**
+     * Calculate divisions between to values.
+     *
+     * @param step Step of changing the values on the scale.
+     * If is 0 then meaning between values can be no more than one division.
+     * @param from First value.
+     * @param to Second value.
+     * @param rounding Specifies the offset by modulo if the number of divisions is not exact.
+     * @return Number divisions between values with direction sign.
+     */
+    fun getNumberDivisions(step: Float, from: Float, to: Float, rounding: RoundingMode = UP): Int {
+        return if (step == 0f) {
+            (to - from).sign.toInt() // single division with direction
+        } else {
+            ((to - from) / step).toBigDecimal().setScale(0, rounding).toInt()
+        }
+    }
+
+    /**
+     * Calculate divisions on scale between to values.
+     *
+     * @param scale The scale of values for which the distance in divisions is determined.
+     * Сan be {@code null} if you only need to take into account the step.
+     * @param step The step of changing values outside the scale.
+     * If is 0 then meaning between outside values is zero. Between boundary and outside value 1.
+     * @param from First value.
+     * @param to Second value.
+     * @return Number divisions between values with direction sign.
+     */
+    fun getNumberDivisions(scale: List<Float>?, step: Float, from: Float, to: Float): Int {
+        if (scale == null) return getNumberDivisions(step, from, to)
+        // determine the direction of move
+        val direction = (to - from).sign.toInt()
+        // the direction is inverted to capture the maximum number of divisions
+        val fromIndex = findIndexOnScale(scale, step, from, direction)
+        val toIndex = findIndexOnScale(scale, step, to, -direction)
+        // calculate the number of divisions between values
+        return toIndex - fromIndex
+    }
+
+    private fun findIndexOnScale(scale: List<Float>, value: Float, direction: Int): Int {
+        require(value in scale.first()..scale.last()) { "The value is outside the scale." }
+
+        var index = scale.binarySearch(value)
+        // value not found return closest value index taking into account the direction
+        if (direction != 0 && index < 0) {
+            // if direction less 0 then return right value index otherwise left
+            index = -(index + if (direction < 0) 1 else 2)
+        }
+        return index // if direction equals 0 then return element insertion position -(index + 1)
+    }
+
+    private fun findIndexOnScale(scale: List<Float>, step: Float, value: Float, direction: Int): Int {
+        if (value in scale.first()..scale.last()) {
+            return findIndexOnScale(scale, value, direction)
+        }
+        // if direction less 0 then return right value index otherwise left
+        val (index, boundary, rounding) = if (value < scale.first()) { // on left
+            val rounding = if (direction < 0) DOWN else UP
+            Triple(0, scale.first(), rounding)
+        } else { // on right
+            val rounding = if (direction < 0) UP else DOWN
+            Triple(scale.lastIndex, scale.last(), rounding)
+        }
+        // calculate index for outside value
+        return index + getNumberDivisions(step, boundary, value, rounding)
+    }
+
+    /**
      * Find the closest value to the specified values.
      *
-     * @param left Value in left side.
-     * @param right Value in right side.
+     * @param first First value.
+     * @param second Second value.
      * @param value The value for which to search for the closest.
-     * @return Closest value left or right. The left value in priority.
+     * @return Closest value first or second. The first value in priority.
      */
-    fun getClosestValue(left: Float, right: Float, value: Float) =
-            if (Math.abs(value - left) <= Math.abs(right - value)) left else right
+    fun getClosestValue(first: Float, second: Float, value: Float) =
+            if (Math.abs(value - first) <= Math.abs(second - value)) first else second
 
     /**
      * Constructed the scale to the value and determines the closest value on the scale.
@@ -23,15 +93,14 @@ internal class ScaleHelper {
      * @param value The value for which the closest on the scale will be searched.
      * @return Closest value on scale, the closest values to the boundary in priority.
      */
-    fun getClosestOnScale(boundary: Float, step: Float, value: Float): Float {
+    fun getClosestOutside(boundary: Float, step: Float, value: Float): Float {
         if (step == 0f) return boundary
 
         // rounding to the closest to the boundary
-        val distance = ((value - boundary) / step)
-                .toBigDecimal().setScale(0, RoundingMode.HALF_DOWN).toInt()
-        val offset = distance.toBigDecimal() * step.toBigDecimal()
+        val divisions = getNumberDivisions(step, boundary, value, HALF_DOWN)
+        val offsetValue = divisions.toBigDecimal() * step.toBigDecimal()
 
-        return (boundary.toBigDecimal() + offset).toFloat()
+        return (boundary.toBigDecimal() + offsetValue).toFloat()
     }
 
     /**
@@ -46,19 +115,17 @@ internal class ScaleHelper {
      */
     fun stickToScale(scale: List<Float>?, step: Float, value: Float): Float {
         if (scale == null) return value
-        // find value on the scale
-        val index = scale.binarySearch(value)
-        if (index >= 0) return value
-        // value does not belong to the scale, we find the closest
-        val insertion = -index - 1
-        return when (insertion) {
-        // outside value from left side
-            0 -> getClosestOnScale(scale.first(), step, value)
-        // outside value from right side
-            scale.size -> getClosestOnScale(scale.last(), step, value)
-        // value on scale
-            else -> getClosestValue(scale[insertion - 1], scale[insertion], value)
+        // check whether the value is outside
+        if (value < scale.first()) { // outside value from left side
+            return getClosestOutside(scale.first(), step, value)
+        } else if (value > scale.last()) { // outside value from right side
+            return getClosestOutside(scale.last(), step, value)
         }
+        // value on the scale, we find its index
+        var index = findIndexOnScale(scale, value, 0)
+        if (index >= 0) return value else index = -(index + 1)
+        // value is absent on the scale, we return the closest
+        return getClosestValue(scale[index - 1], scale[index], value)
     }
 
     /**
@@ -86,11 +153,7 @@ internal class ScaleHelper {
         }
         // Finding the index of the value on the scale. If the value is not found
         // returns the index of the nearest value taking into account the direction of the gesture.
-        var index: Int = scale.binarySearch(value)
-        if (index < 0) {
-            val offset = if (division < 0) 1 else 2
-            index = -(index + offset)
-        }
+        val index = findIndexOnScale(scale, value, division.sign)
         // the value index lies on the scale, we move along it
         return moveByScale(scale, step, index, division)
     }
@@ -107,10 +170,10 @@ internal class ScaleHelper {
 
         // Attract to the value on the scale
         if (division < 0) { // direction right to left
-            closestValue = getClosestOnScale(scale.first(), step, value)
+            closestValue = getClosestOutside(scale.first(), step, value)
             offset = if (closestValue < value) 1 else 0
         } else { // direction left to right
-            closestValue = getClosestOnScale(scale.last(), step, value)
+            closestValue = getClosestOutside(scale.last(), step, value)
             offset = if (closestValue > value) -1 else 0
         }
         // calculate the value based on the step from closest value
@@ -118,23 +181,12 @@ internal class ScaleHelper {
     }
 
     private fun moveByScaleInside(scale: List<Float>, step: Float, value: Float, division: Int): Float {
-        val boundaryIndex: Int
-        val offset: Int
-
-        if (division > 0) {  // direction left to right
-            boundaryIndex = 0
-            offset = -1
-        } else {  // direction right to left
-            boundaryIndex = scale.lastIndex
-            offset = 1
-        }
+        // division > 0 direction left to right otherwise right to left
+        val (boundaryIndex, offset) = if (division > 0) Pair(0, -1) else Pair(scale.lastIndex, 1)
         // if step 0 means we are attracted to the boundary of the scale and move along it
         if (step == 0f) return moveByScale(scale, step, boundaryIndex, division + offset)
-
-        val distance = ((value - scale[boundaryIndex]) / step)
         // the number of divisions up to the scale of values remaining after the move
-        val remainder = division + distance
-                .toBigDecimal().setScale(0, RoundingMode.UP).toInt()
+        val remainder = division + getNumberDivisions(step, scale[boundaryIndex], value)
         // move from the scale outwards or along it, depending on the sign of the remainder
         return moveByScale(scale, step, boundaryIndex, remainder)
     }
@@ -142,15 +194,12 @@ internal class ScaleHelper {
     private fun moveByScale(scale: List<Float>, step: Float, index: Int, division: Int): Float {
         val destination = index + division
 
-        return when {
-        // move on the scale outwards to the left
-            destination < 0 ->
-                moveByStep(step, scale.first(), destination)
-        // move on the scale outwards to the right
-            destination > scale.lastIndex ->
-                moveByStep(step, scale.last(), (destination - scale.lastIndex))
-        // move on the scale
-            else -> scale[destination]
+        if (destination < 0) { // move on the scale outwards to the left
+            return moveByStep(step, scale.first(), destination)
+        } else if (destination > scale.lastIndex) { // move on the scale outwards to the right
+            return moveByStep(step, scale.last(), (destination - scale.lastIndex))
         }
+        // move on the scale
+        return scale[destination]
     }
 }

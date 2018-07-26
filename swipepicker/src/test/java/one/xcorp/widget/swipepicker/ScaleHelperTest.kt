@@ -9,6 +9,60 @@ class ScaleHelperTest {
     private val scaleHelper = ScaleHelper()
 
     @Test
+    fun getNumberDivisions() = with(scaleHelper) {
+        assertEquals(getNumberDivisions(0f, -3.5f, -8f), -1)
+        assertEquals(getNumberDivisions(0f, 7f, 11.5f), 1)
+
+        assertEquals(getNumberDivisions(1.5f, -3.5f, -3.5f), 0)
+        assertEquals(getNumberDivisions(1.5f, 7f, 7f), 0)
+
+        assertEquals(getNumberDivisions(1.5f, -3.5f, -8f), -3)
+        assertEquals(getNumberDivisions(1.5f, -4f, -8f), -3)
+        assertEquals(getNumberDivisions(1.5f, -4f, -0.5f), 3)
+
+        assertEquals(getNumberDivisions(1.5f, 7f, 11.5f), 3)
+        assertEquals(getNumberDivisions(1.5f, 7.5f, 11.5f), 3)
+        assertEquals(getNumberDivisions(1.5f, 7.5f, 4f), -3)
+    }
+
+    @Test
+    fun getNumberDivisionsOnScale() = with(scaleHelper) {
+        assertEquals(getNumberDivisions(null, 0f, 0f, -4.25f), -1)
+        assertEquals(getNumberDivisions(null, 0f, 1f, 5f), 1)
+
+        val scale = listOf(-2f, -1.99f, -1.34f, -1f, 0f, 0.75f, 1.53f, 3.01f, 3.5f)
+
+        assertEquals(getNumberDivisions(scale, 0f, 0f, -1.99f), -3)
+        assertEquals(getNumberDivisions(scale, 0f, -1.34f, 1.53f), 4)
+        assertEquals(getNumberDivisions(scale, 0f, 1f, -1.5f), -5)
+        assertEquals(getNumberDivisions(scale, 0f, -0.1f, 2f), 4)
+
+        assertEquals(getNumberDivisions(scale, 0f, -1.995f, -5.1f), -2)
+        assertEquals(getNumberDivisions(scale, 0f, -5f, -1.5f), 3)
+        assertEquals(getNumberDivisions(scale, 0f, 3.25f, 7f), 2)
+        assertEquals(getNumberDivisions(scale, 0f, 7f, 3.25f), -2)
+        assertEquals(getNumberDivisions(scale, 0f, -5f, 7f), 10)
+        assertEquals(getNumberDivisions(scale, 0f, 6.5f, -4.5f), -10)
+
+        assertEquals(getNumberDivisions(scale, 0f, -4.5f, -8f), 0)
+        assertEquals(getNumberDivisions(scale, 0f, -8f, -4.5f), 0)
+        assertEquals(getNumberDivisions(scale, 0f, 6.5f, 10f), 0)
+        assertEquals(getNumberDivisions(scale, 0f, 10f, 6.5f), 0)
+
+        assertEquals(getNumberDivisions(scale, 1.5f, -1.995f, -5.1f), -4)
+        assertEquals(getNumberDivisions(scale, 1.5f, -5f, -1.5f), 4)
+        assertEquals(getNumberDivisions(scale, 1.5f, 3.25f, 7f), 4)
+        assertEquals(getNumberDivisions(scale, 1.5f, 7f, 3.25f), -4)
+        assertEquals(getNumberDivisions(scale, 1.5f, -5f, 7f), 13)
+        assertEquals(getNumberDivisions(scale, 1.5f, 6.5f, -4.5f), -12)
+
+        assertEquals(getNumberDivisions(scale, 1.5f, -4.5f, -8f), -3)
+        assertEquals(getNumberDivisions(scale, 1.5f, -8.5f, -4.5f), 4)
+        assertEquals(getNumberDivisions(scale, 1.5f, 7f, 10f), 3)
+        assertEquals(getNumberDivisions(scale, 1.5f, 9.5f, 5f), -3)
+    }
+
+    @Test
     fun getClosestValue() = with(scaleHelper) {
         assertEquals(getClosestValue(1f, 3f, 2f), 1f)
         assertEquals(getClosestValue(1f, 3f, 2.1f), 3f)
@@ -18,18 +72,18 @@ class ScaleHelperTest {
     }
 
     @Test
-    fun getClosestOnScale() = with(scaleHelper) {
-        assertEquals(getClosestOnScale(-2f, 0f, -5f), -2f)
-        assertEquals(getClosestOnScale(3.5f, 0f, 10f), 3.5f)
+    fun getClosestOutside() = with(scaleHelper) {
+        assertEquals(getClosestOutside(-2f, 0f, -5f), -2f)
+        assertEquals(getClosestOutside(3.5f, 0f, 10f), 3.5f)
 
-        assertEquals(getClosestOnScale(-2f, 1.5f, -3.5f), -3.5f)
-        assertEquals(getClosestOnScale(3.5f, 1.5f, 6.5f), 6.5f)
+        assertEquals(getClosestOutside(-2f, 1.5f, -3.5f), -3.5f)
+        assertEquals(getClosestOutside(3.5f, 1.5f, 6.5f), 6.5f)
 
-        assertEquals(getClosestOnScale(-2f, 1.5f, -8.75f), -8f)
-        assertEquals(getClosestOnScale(3.5f, 1.5f, 13.25f), 12.5f)
+        assertEquals(getClosestOutside(-2f, 1.5f, -8.75f), -8f)
+        assertEquals(getClosestOutside(3.5f, 1.5f, 13.25f), 12.5f)
 
-        assertEquals(getClosestOnScale(-2f, 1.5f, -8.76f), -9.5f)
-        assertEquals(getClosestOnScale(3.5f, 1.5f, 13.26f), 14f)
+        assertEquals(getClosestOutside(-2f, 1.5f, -8.76f), -9.5f)
+        assertEquals(getClosestOutside(3.5f, 1.5f, 13.26f), 14f)
     }
 
     @Test
