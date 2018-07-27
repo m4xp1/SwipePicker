@@ -28,10 +28,10 @@ import android.view.WindowManager.LayoutParams.*
 import android.view.inputmethod.EditorInfo
 import android.widget.LinearLayout
 import android.widget.Scroller
-import android.widget.TextView
 import java.io.Serializable
 import java.text.NumberFormat
 import java.util.*
+import kotlin.math.sign
 
 class SwipePicker : LinearLayout {
 
@@ -220,10 +220,10 @@ class SwipePicker : LinearLayout {
 
         obtainStyledAttributes(context, attrs, defStyleAttr, defStyleRes)
 
-        inputAreaView.setOnTouchListener(::onTouch)
-        inputEditText.setOnBackPressedListener(::onInputCancel)
-        inputEditText.setOnEditorActionListener(::onInputDone)
-        inputEditText.setOnFocusChangeListener(::onFocusChange)
+        inputAreaView.setOnTouchListener { _, e -> onTouch(e) }
+        inputEditText.setOnBackPressedListener { onInputCancel() }
+        inputEditText.setOnEditorActionListener { _, a, e -> onInputDone(a, e) }
+        inputEditText.setOnFocusChangeListener { _, h -> onFocusChange(h) }
 
         invalidateValue()
     }
@@ -378,7 +378,7 @@ class SwipePicker : LinearLayout {
     fun getInputText(): String = inputEditText.text.toString()
 
     fun setValue(value: CharSequence): Boolean {
-        val result = valueTransformer.transform(this, value.toString())
+        val result = valueTransformer.stringToFloat(this, value.toString())
         if (result != null) {
             this.value = result
             return true
@@ -397,13 +397,6 @@ class SwipePicker : LinearLayout {
             value = value // stick value to scale
         }
     }
-
-    fun setOnStateChangeListener(listener: (isActivated: Boolean) -> Unit) =
-            setOnStateChangeListener(object : OnStateChangeListener {
-                override fun onStateChanged(view: SwipePicker, isActivated: Boolean) {
-                    listener(isActivated)
-                }
-            })
 
     fun setOnStateChangeListener(listener: OnStateChangeListener?) {
         stateChangeListener = listener
@@ -488,21 +481,21 @@ class SwipePicker : LinearLayout {
         return true
     }
 
-    @Suppress("UNUSED_PARAMETER")
-    private fun onTouch(view: View, event: MotionEvent): Boolean {
+    private fun onTouch(event: MotionEvent): Boolean {
         var result = gestureDetector.onTouchEvent(event)
-        if (!result) {
-            if (event.action == ACTION_UP) {
-                scrollHandler.finishFling()
-                playSoundEffect(CLICK)
-                isPressed = false
-                result = true
-            }
+        if (!result && event.action == ACTION_UP) {
+            scrollHandler.finishFling()
+            playSoundEffect(CLICK)
+
+            isPressed = false
+            result = true
         }
         return result
     }
 
-    override fun isActivated() = activated
+    override fun isActivated(): Boolean {
+        return activated
+    }
 
     override fun setActivated(activated: Boolean) {
         if (activated == isActivated) return
@@ -515,7 +508,7 @@ class SwipePicker : LinearLayout {
         animateHint(activated)
         this.activated = activated
 
-        stateChangeListener?.onStateChanged(this, activated)
+        stateChangeListener?.onActivationChanged(this, activated)
     }
 
     private fun animateHint(activated: Boolean) {
@@ -566,6 +559,8 @@ class SwipePicker : LinearLayout {
         if (inputEditText.visibility == View.VISIBLE) {
             setInputEnable(selected)
         }
+
+        stateChangeListener?.onSelectionChanged(this, selected)
     }
 
     private fun setInputVisible(visible: Boolean) {
@@ -602,23 +597,24 @@ class SwipePicker : LinearLayout {
         return false
     }
 
-    private fun onInputDone(view: TextView, actionId: Int, event: KeyEvent?): Boolean {
+    private fun onInputDone(actionId: Int, event: KeyEvent?): Boolean {
         if (actionId == EditorInfo.IME_ACTION_DONE || event?.keyCode == KeyEvent.KEYCODE_ENTER) {
-            val result = valueTransformer.transform(this, view.text.toString())
+            val result = valueTransformer.stringToFloat(this, inputEditText.text.toString())
+
             if (result == null) {
                 inputEditText.selectAll()
             } else {
                 value = result
                 isSelected = false
             }
+
             playSoundEffect(CLICK)
             return true
         }
         return false
     }
 
-    @Suppress("UNUSED_PARAMETER")
-    private fun onFocusChange(view: View, hasFocus: Boolean) {
+    private fun onFocusChange(hasFocus: Boolean) {
         if (!hasFocus) {
             isSelected = false
         }
@@ -680,7 +676,7 @@ class SwipePicker : LinearLayout {
     private fun invalidateValue() {
         if (isSelected) return
 
-        inputEditText.setText(valueTransformer.transform(this, value))
+        inputEditText.setText(valueTransformer.floatToString(this, value))
         if (isPressed) {
             // get the value from input to take into account the maximum length
             hoverView.text = inputEditText.text
@@ -704,7 +700,7 @@ class SwipePicker : LinearLayout {
          * @return Converted internal value or {@code null}.
          * If null then input mode don't disable and value not apply.
          */
-        fun transform(view: SwipePicker, value: String): Float? = with(view) {
+        fun stringToFloat(view: SwipePicker, value: String): Float? = with(view) {
             return value.toFloatOrNull() ?: this.value
         }
 
@@ -715,7 +711,7 @@ class SwipePicker : LinearLayout {
          * @return Converted display value or {@code null}.
          * If null then set empty value.
          */
-        fun transform(view: SwipePicker, value: Float): String? = with(view) {
+        fun floatToString(view: SwipePicker, value: Float): String? = with(view) {
             return numberFormat.format(value)
         }
     }
@@ -730,6 +726,8 @@ class SwipePicker : LinearLayout {
          * @return Closest value on scale, given the limit.
          */
         fun onStick(view: SwipePicker, value: Float): Float = with(view) {
+            val scale = scale ?: return value
+
             val closestValue = scaleHelper.stickToScale(scale, step, value)
             // we are attracted to the limit if it is closer
             return floatArrayOf(closestValue, minValue, maxValue)
@@ -745,19 +743,53 @@ class SwipePicker : LinearLayout {
          * @return The calculated value after the gesture processing which must be set to the view.
          */
         fun onSwipe(view: SwipePicker, value: Float, division: Int): Float = with(view) {
-            return scaleHelper.moveToDivision(scale, step, value, division)
+            var result = scaleHelper.moveToDivision(scale, step, value, division)
+
+            if (!looped) return result
+
+            val (from, to) = if (division < 0)
+                Pair(minValue, maxValue) else Pair(maxValue, minValue)
+
+            while (result !in minValue..maxValue) {
+                var remainder = scaleHelper.getNumberDivisions(scale, step, from, result)
+                val boundary = scaleHelper.moveToDivision(scale, step, result, -remainder)
+
+                if (boundary != from) {
+                    if (Math.abs(remainder) == 1) {
+                        return from
+                    } else {
+                        remainder -= division.sign
+                    }
+                }
+
+                val offset = remainder - division.sign
+                result = scaleHelper.moveToDivision(scale, step, to, offset)
+            }
+            return result
         }
     }
 
     interface OnStateChangeListener {
 
         /**
-         * The listener is called every time the activate state changes.
+         * The listener is called every time the activation state changes.
          *
          * @param view SwipePicker of initiating event.
          * @param isActivated Current activated state.
          */
-        fun onStateChanged(view: SwipePicker, isActivated: Boolean)
+        fun onActivationChanged(view: SwipePicker, isActivated: Boolean) {
+            /* empty for usability */
+        }
+
+        /**
+         * The listener is called every time the selection state changes.
+         *
+         * @param view SwipePicker of initiating event.
+         * @param isSelected Current selected state.
+         */
+        fun onSelectionChanged(view: SwipePicker, isSelected: Boolean) {
+            /* empty for usability */
+        }
     }
 
     interface OnValueChangeListener {
