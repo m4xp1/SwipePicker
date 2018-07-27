@@ -21,6 +21,7 @@ import android.text.InputType
 import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.*
+import android.view.MotionEvent.ACTION_CANCEL
 import android.view.MotionEvent.ACTION_UP
 import android.view.SoundEffectConstants.CLICK
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
@@ -483,7 +484,7 @@ class SwipePicker : LinearLayout {
 
     private fun onTouch(event: MotionEvent): Boolean {
         var result = gestureDetector.onTouchEvent(event)
-        if (!result && event.action == ACTION_UP) {
+        if (!result && event.action == ACTION_UP || event.action == ACTION_CANCEL) {
             scrollHandler.finishFling()
             playSoundEffect(CLICK)
 
