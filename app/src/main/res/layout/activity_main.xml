@@ -1,8 +1,117 @@
 <?xml version="1.0" encoding="utf-8"?>
 <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="@dimen/content_padding"
     tools:context=".MainActivity">
 
+    <one.xcorp.widget.swipepicker.SwipePicker
+        android:id="@+id/number"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:state_activated="true"
+        app:allowDeactivate="false"
+        app:layout_constraintStart_toStartOf="@+id/day"
+        app:layout_constraintTop_toTopOf="parent"
+        app:manualInput="false"
+        app:value="5" />
+
+    <one.xcorp.widget.swipepicker.SwipePicker
+        android:id="@+id/scale"
+        android:layout_width="wrap_content"
+        android:layout_height="55dp"
+        android:inputType="numberSigned|numberDecimal"
+        android:state_activated="true"
+        app:allowDeactivate="false"
+        app:allowFling="false"
+        app:layout_constraintEnd_toEndOf="@+id/year"
+        app:layout_constraintTop_toTopOf="@+id/number"
+        app:looped="true"
+        app:maxValue="110"
+        app:minValue="-10"
+        app:scale="@array/scale"
+        app:step="3.3"
+        app:sticky="true"
+        app:value="1.3" />
+
+    <one.xcorp.widget.swipepicker.SwipePicker
+        android:id="@+id/day"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="@dimen/content_padding"
+        android:layout_marginRight="@dimen/content_padding"
+        android:hint="@string/day"
+        android:maxLength="2"
+        app:layout_constraintEnd_toStartOf="@+id/month"
+        app:layout_constraintTop_toTopOf="@+id/month"
+        app:looped="true"
+        app:maxValue="31"
+        app:minValue="1" />
+
+    <one.xcorp.widget.swipepicker.SwipePicker
+        android:id="@+id/month"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/content_padding"
+        android:hint="@string/month"
+        android:inputType="text"
+        android:maxLength="3"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/number"
+        app:looped="true"
+        app:maxValue="12"
+        app:minValue="1">
+
+        <TextView
+            android:id="@+id/month_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="2dp"
+            tools:text="autumn" />
+    </one.xcorp.widget.swipepicker.SwipePicker>
+
+    <one.xcorp.widget.swipepicker.SwipePicker
+        android:id="@+id/year"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="@dimen/content_padding"
+        android:layout_marginStart="@dimen/content_padding"
+        android:hint="@string/year"
+        android:maxLength="4"
+        app:layout_constraintStart_toEndOf="@+id/month"
+        app:layout_constraintTop_toTopOf="@+id/month"
+        app:looped="true"
+        app:maxValue="2100"
+        app:minValue="1900"
+        app:value="1970" />
+
+    <one.xcorp.widget.swipepicker.SwipePicker
+        android:id="@+id/time"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/content_padding"
+        android:hint="@string/time"
+        android:inputType="time"
+        app:layout_constraintEnd_toEndOf="@+id/year"
+        app:layout_constraintStart_toStartOf="@+id/day"
+        app:layout_constraintTop_toBottomOf="@+id/month"
+        app:looped="true"
+        app:maxValue="86340000"
+        app:minValue="0"
+        app:step="900000"
+        app:sticky="true"
+        app:value="0">
+
+        <TextView
+            android:id="@+id/time_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="2dp"
+            tools:text="am" />
+    </one.xcorp.widget.swipepicker.SwipePicker>
 </android.support.constraint.ConstraintLayout>

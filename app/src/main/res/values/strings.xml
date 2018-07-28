@@ -1,3 +1,20 @@
 <resources>
     <string name="app_name">SwipePicker</string>
+
+    <string name="day">Day</string>
+    <string name="month">Month</string>
+    <string name="year">Year</string>
+    <string name="time">Time</string>
+
+    <string-array name="season">
+        <item>autumn</item>
+        <item>winter</item>
+        <item>spring</item>
+        <item>summer</item>
+    </string-array>
+
+    <string-array name="times_of_day">
+        <item>am</item>
+        <item>pm</item>
+    </string-array>
 </resources>

@@ -1,15 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <array name="scaleValues">
+    <array name="scale">
+        <item>0.1</item>
         <item>0.2</item>
+        <item>0.3</item>
         <item>0.5</item>
-        <item>0.7</item>
-        <item>1</item>
-        <item>1.2</item>
-        <item>1.5</item>
-        <item>1.7</item>
-        <item>2</item>
-        <item>2.5</item>
-        <item>3</item>
+        <item>0.8</item>
+        <item>1.3</item>
+        <item>2.1</item>
+        <item>3.4</item>
+        <item>5.5</item>
+        <item>8.9</item>
+        <item>14.4</item>
+        <item>23.3</item>
+        <item>37.7</item>
+        <item>61.0</item>
+        <item>98.7</item>
+    </array>
+
+    <array name="months">
+        <item>Jan</item>
+        <item>Feb</item>
+        <item>Mar</item>
+        <item>Apr</item>
+        <item>May</item>
+        <item>Jun</item>
+        <item>Jul</item>
+        <item>Aug</item>
+        <item>Sep</item>
+        <item>Oct</item>
+        <item>Nov</item>
+        <item>Dec</item>
     </array>
 </resources>
