@@ -11,6 +11,6 @@
     <color name="hint_accent">#00bcd4</color>
     <color name="hint_primary">@color/background_green</color>
     <color name="input_selected">#e78020</color>
-    <color name="hover_view_text">#4f5dfc</color>
-    <color name="hover_view_background">#e78020</color>
+    <color name="hover_view_text">#434343</color>
+    <color name="hover_view_background">#00bcd4</color>
 </resources>

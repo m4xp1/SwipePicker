@@ -37,6 +37,6 @@
     </style>
 
     <style name="SwipePicker.HoverViewScale" parent="@style/XcoRp.Style.SwipePicker.HoverView">
-        <item name="android:color">@color/hover_view_background</item>
+        <item name="android:color">@color/background_scale</item>
     </style>
 </resources>
