@@ -369,6 +369,13 @@ class SwipePicker : LinearLayout {
                 .toTypedArray()
     }
 
+    fun addInputFilter(filter: InputFilter) {
+        inputFilters = inputFilters
+                .toMutableList()
+                .apply { add(filter) }
+                .toTypedArray()
+    }
+
     fun getInputText(): String = inputEditText.text.toString()
 
     fun setValue(value: CharSequence): Boolean {
