@@ -2,7 +2,6 @@
 
     <style name="XcoRp.Widget.SwipePicker" parent="">
         <item name="android:minWidth">@dimen/swipePicker_minWidth</item>
-        <item name="childPadding">@dimen/swipePicker_childPadding</item>
         <item name="hintTextAppearance">@style/XcoRp.TextAppearance.SwipePicker.Hint</item>
         <item name="inputTextAppearance">@style/XcoRp.TextAppearance.SwipePicker.Input</item>
         <item name="backgroundInput">@drawable/bg_input_swipe_picker</item>

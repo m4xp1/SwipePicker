@@ -265,8 +265,6 @@ class SwipePicker : LinearLayout {
         minimumWidth = typedArray.getDimensionPixelSize(
                 R.styleable.SwipePicker_android_minWidth,
                 resources.getDimensionPixelSize(R.dimen.swipePicker_minWidth))
-        setChildPadding(typedArray.getDimensionPixelSize(R.styleable.SwipePicker_childPadding,
-                resources.getDimensionPixelSize(R.dimen.swipePicker_childPadding)))
         hint = typedArray.getString(R.styleable.SwipePicker_android_hint)
         activated = typedArray.getBoolean(
                 R.styleable.SwipePicker_android_state_activated, activated)
@@ -345,11 +343,6 @@ class SwipePicker : LinearLayout {
             16 -> PorterDuff.Mode.ADD
             else -> default
         }
-    }
-
-    fun setChildPadding(padding: Int) {
-        hintTextView.setPadding(padding, padding, padding, padding)
-        inputEditText.setPadding(padding, padding, padding, padding)
     }
 
     fun setHintTextSize(unit: Int, size: Float) = hintTextView.setTextSize(unit, size)

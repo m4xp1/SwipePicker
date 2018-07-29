@@ -9,7 +9,8 @@
         android:gravity="center"
         android:includeFontPadding="false"
         android:labelFor="@android:id/input"
-        android:maxLines="1" />
+        android:maxLines="1"
+        android:padding="@dimen/swipePicker_childPadding" />
 
     <FrameLayout
         android:id="@android:id/inputArea"
@@ -29,6 +30,7 @@
             android:imeOptions="flagNoFullscreen|actionDone"
             android:includeFontPadding="false"
             android:maxLines="1"
+            android:padding="@dimen/swipePicker_childPadding"
             android:selectAllOnFocus="true"
             android:textColor="@null" />
     </FrameLayout>
