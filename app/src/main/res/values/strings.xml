@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">SwipePicker</string>
 
+    <string name="number">Number</string>
     <string name="day">Day</string>
     <string name="month">Month</string>
     <string name="year">Year</string>

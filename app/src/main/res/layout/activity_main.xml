@@ -9,12 +9,15 @@
 
     <one.xcorp.widget.swipepicker.SwipePicker
         android:id="@+id/number"
+        style="@style/SwipePicker.Green"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:hint="@string/number"
         android:state_activated="true"
         app:allowDeactivate="false"
         app:layout_constraintStart_toStartOf="@+id/day"
         app:layout_constraintTop_toTopOf="parent"
+        app:looped="false"
         app:manualInput="false"
         app:value="5" />
 
@@ -26,9 +29,10 @@
         android:state_activated="true"
         app:allowDeactivate="false"
         app:allowFling="false"
+        app:backgroundInput="@drawable/scale_background"
+        app:hoverViewStyle="@style/SwipePicker.HoverViewScale"
         app:layout_constraintEnd_toEndOf="@+id/year"
         app:layout_constraintTop_toTopOf="@+id/number"
-        app:looped="true"
         app:maxValue="110"
         app:minValue="-10"
         app:scale="@array/scale"
@@ -46,7 +50,6 @@
         android:maxLength="2"
         app:layout_constraintEnd_toStartOf="@+id/month"
         app:layout_constraintTop_toTopOf="@+id/month"
-        app:looped="true"
         app:maxValue="31"
         app:minValue="1" />
 
@@ -61,7 +64,6 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/number"
-        app:looped="true"
         app:maxValue="12"
         app:minValue="1">
 
@@ -84,7 +86,6 @@
         android:maxLength="4"
         app:layout_constraintStart_toEndOf="@+id/month"
         app:layout_constraintTop_toTopOf="@+id/month"
-        app:looped="true"
         app:maxValue="2100"
         app:minValue="1900"
         app:value="1970" />
@@ -99,7 +100,6 @@
         app:layout_constraintEnd_toEndOf="@+id/year"
         app:layout_constraintStart_toStartOf="@+id/day"
         app:layout_constraintTop_toBottomOf="@+id/month"
-        app:looped="true"
         app:maxValue="86340000"
         app:minValue="0"
         app:step="900000"

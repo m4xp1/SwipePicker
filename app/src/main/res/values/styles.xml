@@ -1,8 +1,42 @@
 <resources>
 
     <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
-        <item name="colorPrimary">@color/colorPrimary</item>
-        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
-        <item name="colorAccent">@color/colorAccent</item>
+        <item name="colorPrimary">@color/color_primary</item>
+        <item name="colorPrimaryDark">@color/color_primary_dark</item>
+        <item name="colorAccent">@color/color_accent</item>
+        <item name="swipePicker">@style/SwipePicker</item>
+    </style>
+
+    <style name="SwipePicker" parent="@style/XcoRp.Widget.SwipePicker">
+        <item name="looped">true</item>
+    </style>
+
+    <style name="SwipePicker.Green">
+        <item name="android:minWidth">@dimen/min_width_swipe_picker</item>
+        <item name="backgroundInputTint">@color/background_green</item>
+        <item name="hintTextAppearance">@style/SwipePicker.HintTextAppearance</item>
+        <item name="inputTextAppearance">@style/SwipePicker.InputTextAppearance</item>
+        <item name="hoverViewStyle">@style/SwipePicker.HoverViewStyle</item>
+    </style>
+
+    <style name="SwipePicker.HintTextAppearance" parent="@style/XcoRp.TextAppearance.SwipePicker.Hint">
+        <item name="android:textSize">@dimen/hint_text_size</item>
+        <item name="android:textColor">@color/hint_text</item>
+    </style>
+
+    <style name="SwipePicker.InputTextAppearance" parent="@style/XcoRp.TextAppearance.SwipePicker.Input">
+        <item name="android:textColor">@color/input_text</item>
+    </style>
+
+    <style name="SwipePicker.HoverViewStyle" parent="@style/XcoRp.Style.SwipePicker.HoverView">
+        <item name="android:minWidth">@dimen/min_width_hover_view</item>
+        <item name="android:padding">@dimen/padding_hover_view</item>
+        <item name="android:textSize">@dimen/hover_view_text_size</item>
+        <item name="android:textColor">@color/hover_view_text</item>
+        <item name="android:color">@color/hover_view_background</item>
+    </style>
+
+    <style name="SwipePicker.HoverViewScale" parent="@style/XcoRp.Style.SwipePicker.HoverView">
+        <item name="android:color">@color/hover_view_background</item>
     </style>
 </resources>
