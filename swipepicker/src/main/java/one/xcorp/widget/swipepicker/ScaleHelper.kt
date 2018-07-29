@@ -28,9 +28,10 @@ internal class ScaleHelper {
 
     private fun getNumberDivisions(step: Float, from: Float, to: Float, rounding: RoundingMode = UP): Int {
         return if (step == 0f) {
-            (to - from).sign.toInt() // single division with direction
+            (to.toBigDecimal() - from.toBigDecimal()).signum() // single division with direction
         } else {
-            ((to - from) / step).toBigDecimal().setScale(0, rounding).toInt()
+            val result = ((to.toBigDecimal() - from.toBigDecimal()) / step.toBigDecimal())
+            return result.setScale(0, rounding).toInt()
         }
     }
 

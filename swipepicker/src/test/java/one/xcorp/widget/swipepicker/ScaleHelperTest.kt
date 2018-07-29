@@ -52,7 +52,7 @@ class ScaleHelperTest {
         assertEquals(getNumberDivisions(null, 0f, 1f, 5f), 1)
 
         // move by scale
-        val scale = listOf(-2f, -1.99f, -1.34f, -1f, 0f, 0.75f, 1.53f, 3.01f, 3.5f)
+        var scale = listOf(-2f, -1.99f, -1.34f, -1f, 0f, 0.75f, 1.53f, 3.01f, 3.5f)
 
         assertEquals(getNumberDivisions(scale, 0f, 0f, -1.99f), -3)
         assertEquals(getNumberDivisions(scale, 0f, -1.34f, 1.53f), 4)
@@ -82,6 +82,12 @@ class ScaleHelperTest {
         assertEquals(getNumberDivisions(scale, 1.5f, -8.5f, -4.5f), 4)
         assertEquals(getNumberDivisions(scale, 1.5f, 7f, 10f), 3)
         assertEquals(getNumberDivisions(scale, 1.5f, 9.5f, 5f), -3)
+
+        scale = listOf(0.1f, 0.2f, 0.3f, 0.5f, 0.8f,
+                1.3f, 2.1f, 3.4f, 5.5f, 8.9f, 14.4f, 23.3f, 37.7f, 61.0f, 98.7f)
+
+        assertEquals(getNumberDivisions(scale, 3.3f, -10f, -13.1f), -1)
+        assertEquals(getNumberDivisions(scale, 3.3f, 110f, 111.9f), 1)
     }
 
     @Test
