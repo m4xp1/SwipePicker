@@ -8,6 +8,7 @@
 
     <color name="background_green">#4caf50</color>
     <color name="background_scale">#e78020</color>
+    <color name="background_negative">#e73120</color>
     <color name="hint_accent">#00bcd4</color>
     <color name="hint_primary">@color/background_green</color>
     <color name="input_selected">#e78020</color>

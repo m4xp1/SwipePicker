@@ -39,5 +39,6 @@
         <attr name="android:textSize" />
         <attr name="android:textColor" />
         <attr name="android:color" />
+        <attr name="colorTint" />
     </declare-styleable>
 </resources>

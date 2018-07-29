@@ -29,6 +29,12 @@ class HoverView : View {
             field = value
             invalidate()
         }
+    var colorTint: Int
+        @ColorInt get
+        set(@ColorInt value) {
+            field = value
+            invalidate()
+        }
     var text: CharSequence = ""
         set(value) {
             field = value
@@ -75,6 +81,7 @@ class HoverView : View {
                 ContextCompat.getColor(context, R.color.swipePicker_textInverse))
         color = typedArray.getColor(R.styleable.HoverView_android_color,
                 ContextCompat.getColor(context, R.color.swipePicker_primary))
+        colorTint = typedArray.getColor(R.styleable.HoverView_colorTint, Color.TRANSPARENT)
         typedArray.recycle()
 
         radiusCorner = resources.getDimensionPixelSize(R.dimen.hoverView_radiusCorner).toFloat()
@@ -130,7 +137,7 @@ class HoverView : View {
     }
 
     override fun onDraw(canvas: Canvas) {
-        paint.color = color
+        paint.color = if (colorTint != Color.TRANSPARENT) colorTint else color
         canvas.drawPath(backgroundPath, paint)
 
         paint.color = textColor
