@@ -502,7 +502,7 @@ class SwipePicker : LinearLayout {
         animateHint(activated)
         this.activated = activated
 
-        stateChangeListener?.onActivationChanged(this, activated)
+        stateChangeListener?.onActivated(this, activated)
     }
 
     private fun animateHint(activated: Boolean) {
@@ -554,7 +554,7 @@ class SwipePicker : LinearLayout {
             setInputEnable(selected)
         }
 
-        stateChangeListener?.onSelectionChanged(this, selected)
+        stateChangeListener?.onSelected(this, selected)
     }
 
     private fun setInputVisible(visible: Boolean) {
@@ -633,6 +633,8 @@ class SwipePicker : LinearLayout {
         } else {
             hideHoverView()
         }
+
+        stateChangeListener?.onPressed(this, pressed)
     }
 
     private fun showHoverView() {
@@ -771,7 +773,7 @@ class SwipePicker : LinearLayout {
          * @param view SwipePicker of initiating event.
          * @param isActivated Current activated state.
          */
-        fun onActivationChanged(view: SwipePicker, isActivated: Boolean) {
+        fun onActivated(view: SwipePicker, isActivated: Boolean) {
             /* empty for usability */
         }
 
@@ -781,7 +783,17 @@ class SwipePicker : LinearLayout {
          * @param view SwipePicker of initiating event.
          * @param isSelected Current selected state.
          */
-        fun onSelectionChanged(view: SwipePicker, isSelected: Boolean) {
+        fun onSelected(view: SwipePicker, isSelected: Boolean) {
+            /* empty for usability */
+        }
+
+        /**
+         * The listener is called every time the pressed state changes.
+         *
+         * @param view SwipePicker of initiating event.
+         * @param isPressed Current pressed state.
+         */
+        fun onPressed(view: SwipePicker, isPressed: Boolean) {
             /* empty for usability */
         }
     }
