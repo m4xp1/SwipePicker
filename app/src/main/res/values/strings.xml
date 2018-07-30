@@ -13,9 +13,4 @@
         <item>spring</item>
         <item>summer</item>
     </string-array>
-
-    <string-array name="times_of_day">
-        <item>am</item>
-        <item>pm</item>
-    </string-array>
 </resources>

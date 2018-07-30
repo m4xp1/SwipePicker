@@ -104,14 +104,5 @@
         app:minValue="0"
         app:step="900000"
         app:sticky="true"
-        app:value="0">
-
-        <TextView
-            android:id="@+id/time_label"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_marginTop="2dp"
-            tools:text="am" />
-    </one.xcorp.widget.swipepicker.SwipePicker>
+        app:value="0" />
 </android.support.constraint.ConstraintLayout>
