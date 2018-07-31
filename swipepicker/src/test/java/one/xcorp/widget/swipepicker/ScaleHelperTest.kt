@@ -88,6 +88,9 @@ class ScaleHelperTest {
 
         assertEquals(getNumberDivisions(scale, 3.3f, -10f, -13.1f), -1)
         assertEquals(getNumberDivisions(scale, 3.3f, 110f, 111.9f), 1)
+
+        assertEquals(getNumberDivisions(null, 900000f, 8.64E7f, 8.55E7f), -1)
+        assertEquals(getNumberDivisions(null, 900000f, 8.55E7f, 8.64E7f), 1)
     }
 
     @Test

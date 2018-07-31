@@ -30,7 +30,9 @@ internal class ScaleHelper {
         return if (step == 0f) {
             (to.toBigDecimal() - from.toBigDecimal()).signum() // single division with direction
         } else {
-            val result = ((to.toBigDecimal() - from.toBigDecimal()) / step.toBigDecimal())
+            val distance = (to.toBigDecimal() - from.toBigDecimal()).toFloat()
+            val result = distance.toBigDecimal() / step.toBigDecimal()
+
             return result.setScale(0, rounding).toInt()
         }
     }
@@ -101,9 +103,9 @@ internal class ScaleHelper {
 
         // rounding to the closest, boundary in priority
         val divisions = getNumberDivisions(step, boundary, value, HALF_DOWN)
-        val offsetValue = divisions.toBigDecimal() * step.toBigDecimal()
+        val offsetValue = (divisions.toBigDecimal() * step.toBigDecimal()).toFloat()
 
-        return (boundary.toBigDecimal() + offsetValue).toFloat()
+        return (boundary.toBigDecimal() + offsetValue.toBigDecimal()).toFloat()
     }
 
     /**
@@ -159,8 +161,10 @@ internal class ScaleHelper {
         return moveByScale(scale, step, index, division)
     }
 
-    private fun moveByStep(step: Float, value: Float, division: Int) =
-            (value.toBigDecimal() + division.toBigDecimal() * step.toBigDecimal()).toFloat()
+    private fun moveByStep(step: Float, value: Float, division: Int): Float {
+        val distance = (division.toBigDecimal() * step.toBigDecimal()).toFloat()
+        return (value.toBigDecimal() + distance.toBigDecimal()).toFloat()
+    }
 
     private fun moveByScaleOutside(scale: List<Float>, step: Float, value: Float, division: Int): Float {
         // outward movement is impossible
