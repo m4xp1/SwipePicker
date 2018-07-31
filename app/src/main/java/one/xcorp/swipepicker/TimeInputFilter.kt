@@ -7,7 +7,7 @@ import java.util.*
 class TimeInputFilter(val is24Hour: Boolean = false) : InputFilter {
 
     private val input = StringBuilder()
-    private val tree by lazy { generateTree() }
+    private val legalTree by lazy { generateLegalTree() }
 
     override fun filter(
             source: CharSequence, start: Int, end: Int,
@@ -15,7 +15,7 @@ class TimeInputFilter(val is24Hour: Boolean = false) : InputFilter {
         input.replace(0, input.length, dest.toString())
         input.replace(dstart, dend, source.subSequence(start, end).toString())
 
-        var node: Node? = tree
+        var node: Node? = legalTree
         for (char in input) {
             node = node?.canReach(char)
             if (node == null) {
@@ -25,7 +25,7 @@ class TimeInputFilter(val is24Hour: Boolean = false) : InputFilter {
         return null
     }
 
-    private fun generateTree(): Node {
+    private fun generateLegalTree(): Node {
         // The root of the tree doesn't contain any numbers.
         val result = Node()
 
