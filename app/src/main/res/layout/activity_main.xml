@@ -97,12 +97,13 @@
         android:layout_margin="@dimen/content_padding"
         android:hint="@string/time"
         android:inputType="time"
+        android:state_activated="true"
+        app:anchor="0"
         app:layout_constraintEnd_toEndOf="@+id/year"
         app:layout_constraintStart_toStartOf="@+id/day"
         app:layout_constraintTop_toBottomOf="@+id/month"
-        app:maxValue="86340000"
+        app:maxValue="85500000"
         app:minValue="0"
         app:step="900000"
-        app:sticky="true"
         app:value="0" />
 </android.support.constraint.ConstraintLayout>

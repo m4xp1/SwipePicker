@@ -13,4 +13,6 @@
         <item>spring</item>
         <item>summer</item>
     </string-array>
+
+    <string name="message_wrong_input">Wrong input!</string>
 </resources>
