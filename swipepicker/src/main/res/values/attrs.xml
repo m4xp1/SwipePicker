@@ -23,6 +23,7 @@
         <attr name="manualInput" format="boolean" />
         <attr name="android:maxLength" />
         <attr name="android:inputType" />
+        <attr name="anchor" format="float" />
         <attr name="scale" format="reference" />
         <attr name="minValue" format="float" />
         <attr name="maxValue" format="float" />

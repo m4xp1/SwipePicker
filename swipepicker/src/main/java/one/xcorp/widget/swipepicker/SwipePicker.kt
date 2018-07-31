@@ -292,6 +292,9 @@ class SwipePicker : LinearLayout {
                 resources.getInteger(R.integer.swipePicker_maxLength)))
         inputType = typedArray.getInt(
                 R.styleable.SwipePicker_android_inputType, InputType.TYPE_CLASS_NUMBER)
+        if (typedArray.hasValue(R.styleable.SwipePicker_anchor)) {
+            scale = listOf(typedArray.getFloat(R.styleable.SwipePicker_anchor, 0f))
+        }
         if (!isInEditMode && typedArray.hasValue(R.styleable.SwipePicker_scale)) {
             scale = typedArray.getFloatArray(R.styleable.SwipePicker_scale).toList()
         }
