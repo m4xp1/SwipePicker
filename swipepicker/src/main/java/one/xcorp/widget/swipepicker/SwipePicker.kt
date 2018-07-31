@@ -4,6 +4,7 @@ import android.animation.*
 import android.content.Context
 import android.content.res.ColorStateList
 import android.content.res.TypedArray
+import android.graphics.Color
 import android.graphics.PixelFormat
 import android.graphics.PorterDuff
 import android.graphics.drawable.Drawable
@@ -360,8 +361,17 @@ class SwipePicker : LinearLayout {
 
     fun setInputTextAppearance(resId: Int) = TextViewCompat.setTextAppearance(inputEditText, resId)
 
-    fun setBackgroundInputTint(@ColorInt tintColor: Int) {
-        backgroundInputTint = ColorStateList.valueOf(tintColor)
+    fun setBackgroundInputTint(@ColorInt color: Int) {
+        backgroundInputTint = ColorStateList.valueOf(color)
+    }
+
+    fun setTintColor(@ColorInt color: Int) {
+        if (color == Color.TRANSPARENT) {
+            backgroundInputTint = null
+        } else {
+            setBackgroundInputTint(color)
+        }
+        hoverView.colorTint = color
     }
 
     fun setMaxLength(length: Int) {
