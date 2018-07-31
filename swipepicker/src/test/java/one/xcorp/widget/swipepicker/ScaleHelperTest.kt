@@ -51,6 +51,11 @@ class ScaleHelperTest {
         assertEquals(getNumberDivisions(null, 0f, 0f, -4.25f), -1)
         assertEquals(getNumberDivisions(null, 0f, 1f, 5f), 1)
 
+        assertEquals(getNumberDivisions(null, 900000f, 8.64E7f, 8.55E7f), -1)
+        assertEquals(getNumberDivisions(null, 900000f, 8.55E7f, 8.64E7f), 1)
+        assertEquals(getNumberDivisions(null, 900000f, 6.12E7f, 0f), -68)
+        assertEquals(getNumberDivisions(null, 900000f, 0f, 6.12E7f), 68)
+
         // move by scale
         var scale = listOf(-2f, -1.99f, -1.34f, -1f, 0f, 0.75f, 1.53f, 3.01f, 3.5f)
 
@@ -88,9 +93,6 @@ class ScaleHelperTest {
 
         assertEquals(getNumberDivisions(scale, 3.3f, -10f, -13.1f), -1)
         assertEquals(getNumberDivisions(scale, 3.3f, 110f, 111.9f), 1)
-
-        assertEquals(getNumberDivisions(null, 900000f, 8.64E7f, 8.55E7f), -1)
-        assertEquals(getNumberDivisions(null, 900000f, 8.55E7f, 8.64E7f), 1)
     }
 
     @Test
