@@ -102,7 +102,7 @@
         app:layout_constraintEnd_toEndOf="@+id/year"
         app:layout_constraintStart_toStartOf="@+id/day"
         app:layout_constraintTop_toBottomOf="@+id/month"
-        app:maxValue="85500000"
+        app:maxValue="86400000"
         app:minValue="0"
         app:step="900000"
         app:value="0" />

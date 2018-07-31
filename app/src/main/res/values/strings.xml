@@ -14,5 +14,5 @@
         <item>summer</item>
     </string-array>
 
-    <string name="message_wrong_input">Wrong input!</string>
+    <string name="message_incorrect_input">Incorrect input!</string>
 </resources>

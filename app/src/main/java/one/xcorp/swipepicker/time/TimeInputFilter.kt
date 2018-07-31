@@ -1,4 +1,4 @@
-package one.xcorp.swipepicker
+package one.xcorp.swipepicker.time
 
 import android.text.InputFilter
 import android.text.Spanned
@@ -75,8 +75,28 @@ class TimeInputFilter(val is24Hour: Boolean = false) : InputFilter {
             // We'll be re-using these nodes, so we'll save them.
             val delimiter = generateDelimiterWithMinutes(ampm)
 
+            // The first hour digit may be 0.
+            var firstDigit = Node('0')
+            result.addChild(firstDigit)
+
+            // When the first digit is 0, the second digit may be 1.
+            var secondDigit = Node('1')
+            firstDigit.addChild(secondDigit)
+            // We'll allow quick input of on-the-hour times.
+            secondDigit.addChild(ampm)
+            // When the second digit is 1, the third digit may be delimiter.
+            secondDigit.addChild(delimiter)
+
+            // When the first digit is 0, the second digit may be 2-9.
+            secondDigit = Node('2', '3', '4', '5', '6', '7', '8', '9')
+            firstDigit.addChild(secondDigit)
+            // We'll allow quick input of on-the-hour-times.
+            secondDigit.addChild(ampm)
+            // When the second digit is 2-9, the third digit may be delimiter.
+            secondDigit.addChild(delimiter)
+
             // The first hour digit may be 1.
-            var firstDigit = Node('1')
+            firstDigit = Node('1')
             result.addChild(firstDigit)
             // We'll allow quick input of on-the-hour times.
             firstDigit.addChild(ampm)
@@ -84,7 +104,7 @@ class TimeInputFilter(val is24Hour: Boolean = false) : InputFilter {
             firstDigit.addChild(delimiter)
 
             // When the first digit is 1, the second digit may be 0-2.
-            val secondDigit = Node('0', '1', '2')
+            secondDigit = Node('0', '1', '2')
             firstDigit.addChild(secondDigit)
             // Also for quick input of on-the-hour times.
             secondDigit.addChild(ampm)
