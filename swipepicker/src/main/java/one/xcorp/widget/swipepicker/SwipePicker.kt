@@ -416,10 +416,10 @@ class SwipePicker : LinearLayout {
         stateChangeListener = listener
     }
 
-    fun setOnValueChangeListener(listener: (value: Float) -> Unit) =
+    fun setOnValueChangeListener(listener: (oldValue: Float, newValue: Float) -> Unit) =
             setOnValueChangeListener(object : OnValueChangeListener {
                 override fun onValueChanged(view: SwipePicker, oldValue: Float, newValue: Float) {
-                    listener(newValue)
+                    listener(oldValue, newValue)
                 }
             })
 
