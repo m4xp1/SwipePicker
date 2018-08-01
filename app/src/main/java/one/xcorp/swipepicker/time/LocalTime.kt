@@ -1,10 +1,27 @@
 package one.xcorp.swipepicker.time
 
+import one.xcorp.swipepicker.time.TimeOfDay.Type.*
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
 
 class LocalTime {
+
+    companion object {
+
+        private val timeFormat = SimpleDateFormat("", Locale.US)
+                .apply { timeZone = TimeZone.getTimeZone("UTC") }
+
+        fun parse(value: String, pattern: String): LocalTime? {
+            timeFormat.applyPattern(pattern)
+
+            return try {
+                LocalTime(timeFormat.parse(value).time)
+            } catch (e: Exception) {
+                null
+            }
+        }
+    }
 
     val millis: Long
 
@@ -30,24 +47,21 @@ class LocalTime {
 
     fun toDate(): Date = Date(millis)
 
+    fun getTimeOfDay(dawnStart: Long, dawnDuration: Long,
+                     sunsetStart: Long, sunsetDuration: Long): TimeOfDay {
+        val dawnEnd = dawnStart + dawnDuration
+        val sunsetEnd = sunsetStart + sunsetDuration
+
+        return when (millis) {
+            in dawnStart..dawnEnd -> TimeOfDay(DAWN, dawnStart, dawnEnd)
+            in dawnEnd..sunsetStart -> TimeOfDay(DAY, dawnEnd, sunsetStart)
+            in sunsetStart..sunsetEnd -> TimeOfDay(SUNSET, sunsetStart, sunsetEnd)
+            else -> TimeOfDay(NIGHT, sunsetEnd, dawnStart)
+        }
+    }
+
     fun toString(pattern: String): String {
         timeFormat.applyPattern(pattern)
         return timeFormat.format(toDate())
-    }
-
-    companion object {
-
-        private val timeFormat = SimpleDateFormat("", Locale.US)
-                .apply { timeZone = TimeZone.getTimeZone("UTC") }
-
-        fun parse(value: String, pattern: String): LocalTime? {
-            timeFormat.applyPattern(pattern)
-
-            return try {
-                LocalTime(timeFormat.parse(value).time)
-            } catch (e: Exception) {
-                null
-            }
-        }
     }
 }
