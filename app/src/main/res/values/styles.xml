@@ -1,9 +1,9 @@
 <resources>
 
     <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
-        <item name="colorPrimary">@color/color_primary</item>
-        <item name="colorPrimaryDark">@color/color_primary_dark</item>
-        <item name="colorAccent">@color/color_accent</item>
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimaryDark">@color/primary_dark</item>
+        <item name="colorAccent">@color/accent</item>
         <item name="swipePicker">@style/SwipePicker</item>
     </style>
 
@@ -11,32 +11,36 @@
         <item name="looped">true</item>
     </style>
 
-    <style name="SwipePicker.Green">
-        <item name="android:minWidth">@dimen/min_width_swipe_picker</item>
-        <item name="backgroundInputTint">@color/background_green</item>
-        <item name="hintTextAppearance">@style/SwipePicker.HintTextAppearance</item>
-        <item name="inputTextAppearance">@style/SwipePicker.InputTextAppearance</item>
-        <item name="hoverViewStyle">@style/SwipePicker.HoverViewStyle</item>
+    <style name="SwipePicker.Number">
+        <item name="android:minWidth">@dimen/number_min_width</item>
+        <item name="backgroundInputTint">@color/number_background</item>
+        <item name="hintTextAppearance">@style/SwipePicker.NumberHint</item>
+        <item name="inputTextAppearance">@style/SwipePicker.NumberInput</item>
+        <item name="hoverViewStyle">@style/SwipePicker.NumberHover</item>
     </style>
 
-    <style name="SwipePicker.HintTextAppearance" parent="@style/XcoRp.TextAppearance.SwipePicker.Hint">
-        <item name="android:textSize">@dimen/hint_text_size</item>
-        <item name="android:textColor">@color/hint_text</item>
+    <style name="SwipePicker.NumberHint" parent="@style/XcoRp.TextAppearance.SwipePicker.Hint">
+        <item name="android:textSize">@dimen/number_hint_text_size</item>
+        <item name="android:textColor">@color/number_hint</item>
     </style>
 
-    <style name="SwipePicker.InputTextAppearance" parent="@style/XcoRp.TextAppearance.SwipePicker.Input">
-        <item name="android:textColor">@color/input_text</item>
+    <style name="SwipePicker.NumberInput" parent="@style/XcoRp.TextAppearance.SwipePicker.Input">
+        <item name="android:textColor">@color/number_input</item>
     </style>
 
-    <style name="SwipePicker.HoverViewStyle" parent="@style/XcoRp.Style.SwipePicker.HoverView">
-        <item name="android:minWidth">@dimen/min_width_hover_view</item>
-        <item name="android:padding">@dimen/padding_hover_view</item>
-        <item name="android:textSize">@dimen/hover_view_text_size</item>
-        <item name="android:textColor">@color/hover_view_text</item>
-        <item name="android:color">@color/hover_view_background</item>
+    <style name="SwipePicker.NumberHover" parent="@style/XcoRp.Style.SwipePicker.HoverView">
+        <item name="android:minWidth">@dimen/number_hover_min_width</item>
+        <item name="android:padding">@dimen/number_hover_padding</item>
+        <item name="android:textSize">@dimen/number_hover_text_size</item>
+        <item name="android:textColor">@color/number_hover_text</item>
+        <item name="android:color">@color/number_hover_background</item>
+    </style>
+
+    <style name="SwipePicker.HoverViewWide" parent="@style/XcoRp.Style.SwipePicker.HoverView">
+        <item name="android:minWidth">@dimen/wide_width_hover</item>
     </style>
 
     <style name="SwipePicker.HoverViewScale" parent="@style/XcoRp.Style.SwipePicker.HoverView">
-        <item name="android:color">@color/background_scale</item>
+        <item name="android:color">@color/scale_background</item>
     </style>
 </resources>

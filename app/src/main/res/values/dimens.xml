@@ -2,11 +2,12 @@
 <resources>
     <dimen name="content_padding">16dp</dimen>
 
-    <dimen name="min_width_swipe_picker">80dp</dimen>
-    <dimen name="radius_corner_swipe_picker">20dp</dimen>
-    <dimen name="min_width_hover_view">35dp</dimen>
-    <dimen name="padding_hover_view">6dp</dimen>
+    <dimen name="number_min_width">80dp</dimen>
+    <dimen name="number_hover_min_width">35dp</dimen>
+    <dimen name="number_hover_padding">6dp</dimen>
+    <dimen name="scale_radius_corner">20dp</dimen>
+    <dimen name="wide_width_hover">40dp</dimen>
 
-    <dimen name="hint_text_size">17sp</dimen>
-    <dimen name="hover_view_text_size">15sp</dimen>
+    <dimen name="number_hint_text_size">17sp</dimen>
+    <dimen name="number_hover_text_size">15sp</dimen>
 </resources>

@@ -9,7 +9,7 @@
 
     <one.xcorp.widget.swipepicker.SwipePicker
         android:id="@+id/number"
-        style="@style/SwipePicker.Green"
+        style="@style/SwipePicker.Number"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:hint="@string/number"
@@ -59,8 +59,9 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/content_padding"
         android:hint="@string/month"
-        android:inputType="text"
-        android:maxLength="3"
+        android:inputType="textNoSuggestions"
+        android:maxLength="4"
+        app:hoverViewStyle="@style/SwipePicker.HoverViewWide"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/number"
@@ -68,12 +69,13 @@
         app:minValue="1">
 
         <TextView
-            android:id="@+id/month_label"
+            android:id="@+id/monthLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:layout_marginTop="2dp"
-            tools:text="autumn" />
+            android:visibility="invisible"
+            tools:text="@string/autumn" />
     </one.xcorp.widget.swipepicker.SwipePicker>
 
     <one.xcorp.widget.swipepicker.SwipePicker
@@ -105,5 +107,14 @@
         app:maxValue="86400000"
         app:minValue="0"
         app:step="900000"
-        app:value="0" />
+        app:value="0">
+
+        <TextView
+            android:id="@+id/timeLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="2dp"
+            tools:text="@string/sunset" />
+    </one.xcorp.widget.swipepicker.SwipePicker>
 </android.support.constraint.ConstraintLayout>

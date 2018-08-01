@@ -4,22 +4,22 @@
         <shape>
             <stroke
                 android:width="@dimen/swipePicker_strokeWidth"
-                android:color="@color/background_scale" />
+                android:color="@color/scale_background" />
             <solid android:color="@android:color/transparent" />
             <corners
-                android:topRightRadius="@dimen/radius_corner_swipe_picker"
-                android:bottomLeftRadius="@dimen/radius_corner_swipe_picker" />
+                android:topRightRadius="@dimen/scale_radius_corner"
+                android:bottomLeftRadius="@dimen/scale_radius_corner" />
         </shape>
     </item>
     <item android:state_activated="true" android:state_selected="true">
         <shape>
             <stroke
                 android:width="@dimen/swipePicker_strokeWidth"
-                android:color="@color/background_scale" />
+                android:color="@color/scale_background" />
             <solid android:color="@android:color/transparent" />
             <corners
-                android:topRightRadius="@dimen/radius_corner_swipe_picker"
-                android:bottomLeftRadius="@dimen/radius_corner_swipe_picker" />
+                android:topRightRadius="@dimen/scale_radius_corner"
+                android:bottomLeftRadius="@dimen/scale_radius_corner" />
         </shape>
     </item>
     <item
@@ -27,23 +27,23 @@
         android:state_pressed="false"
         android:state_selected="false">
         <shape>
-            <solid android:color="@color/background_scale" />
+            <solid android:color="@color/scale_background" />
             <corners
-                android:topRightRadius="@dimen/radius_corner_swipe_picker"
-                android:bottomLeftRadius="@dimen/radius_corner_swipe_picker" />
+                android:topRightRadius="@dimen/scale_radius_corner"
+                android:bottomLeftRadius="@dimen/scale_radius_corner" />
         </shape>
     </item>
     <item>
         <shape>
             <stroke
                 android:width="@dimen/swipePicker_strokeWidth"
-                android:color="@color/background_scale"
+                android:color="@color/scale_background"
                 android:dashGap="@dimen/swipePicker_dashGap"
                 android:dashWidth="@dimen/swipePicker_dashWidth" />
             <solid android:color="@android:color/transparent" />
             <corners
-                android:topRightRadius="@dimen/radius_corner_swipe_picker"
-                android:bottomLeftRadius="@dimen/radius_corner_swipe_picker" />
+                android:topRightRadius="@dimen/scale_radius_corner"
+                android:bottomLeftRadius="@dimen/scale_radius_corner" />
         </shape>
     </item>
 </selector>

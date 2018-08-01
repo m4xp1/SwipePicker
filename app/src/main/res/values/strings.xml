@@ -7,12 +7,14 @@
     <string name="year">Year</string>
     <string name="time">Time</string>
 
-    <string-array name="season">
-        <item>autumn</item>
-        <item>winter</item>
-        <item>spring</item>
-        <item>summer</item>
-    </string-array>
+    <string name="autumn">autumn</string>
+    <string name="winter">winter</string>
+    <string name="spring">spring</string>
+    <string name="summer">summer</string>
 
-    <string name="message_incorrect_input">Incorrect input!</string>
+    <string name="dawn">dawn</string>
+    <string name="sunset">sunset</string>
+    <string name="night">night</string>
+
+    <string name="incorrect_input">Incorrect input!</string>
 </resources>
