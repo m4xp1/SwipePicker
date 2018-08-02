@@ -2,6 +2,9 @@
 <resources>
     <dimen name="content_padding">16dp</dimen>
 
+    <dimen name="text_margin">24dp</dimen>
+    <dimen name="text_line_spacing">10dp</dimen>
+
     <dimen name="number_min_width">80dp</dimen>
     <dimen name="number_hover_min_width">35dp</dimen>
     <dimen name="number_hover_padding">6dp</dimen>

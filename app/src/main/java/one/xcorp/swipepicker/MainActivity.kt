@@ -117,6 +117,7 @@ class MainActivity : AppCompatActivity() {
         })
         time.setOnStateChangeListener(object : SwipePicker.OnStateChangeListener {
             override fun onActivated(view: SwipePicker, isActivated: Boolean) {
+                time.setTintColor(Color.TRANSPARENT)
                 timeLabel.visibility = if (isActivated) VISIBLE else INVISIBLE
             }
         })

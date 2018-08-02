@@ -1,5 +1,9 @@
 <resources>
     <string name="app_name">SwipePicker</string>
+    <string name="app_description">
+        This widget allows the user to enter different values, such as:
+        time, date, number, without additional dialog windows using the swipe gestures.
+    </string>
 
     <string name="number">Number</string>
     <string name="day">Day</string>
