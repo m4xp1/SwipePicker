@@ -17,7 +17,6 @@ import one.xcorp.swipepicker.time.TimeOfDay
 import one.xcorp.widget.swipepicker.SwipePicker
 import java.lang.String.valueOf
 import java.util.*
-import java.util.Calendar.DATE
 import java.util.concurrent.TimeUnit
 
 class MainActivity : AppCompatActivity() {
@@ -44,8 +43,8 @@ class MainActivity : AppCompatActivity() {
     private fun configureScale() {
         val negativeColor = ContextCompat.getColor(this, R.color.negative_background)
 
-        scale.setOnValueChangeListener {
-            scale.setTintColor(if (it < 0) negativeColor else Color.TRANSPARENT)
+        scale.setOnValueChangeListener { _, new ->
+            scale.setTintColor(if (new < 0) negativeColor else Color.TRANSPARENT)
         }
     }
 
@@ -53,13 +52,20 @@ class MainActivity : AppCompatActivity() {
         val date = Calendar.getInstance()
         val stateListener = DateStateChangeListener()
 
-        day.value = (date.get(DATE)).toFloat()
+        day.value = (date.get(Calendar.DATE)).toFloat()
         day.setOnStateChangeListener(stateListener)
 
         configureMonth(date, stateListener)
 
         year.value = (date.get(Calendar.YEAR)).toFloat()
         year.setOnStateChangeListener(stateListener)
+        year.setOnValueChangeListener { _, _ ->
+            if (month.value == (Calendar.FEBRUARY + 1).toFloat()) {
+                invalidateMaxDay()
+            }
+        }
+
+        invalidateMaxDay()
     }
 
     private fun configureMonth(date: Calendar, stateListener: SwipePicker.OnStateChangeListener) {
@@ -83,8 +89,11 @@ class MainActivity : AppCompatActivity() {
                 return monthsValues[value.toInt() - 1]
             }
         })
-        month.setOnValueChangeListener(::setSeason)
         month.setOnStateChangeListener(stateListener)
+        month.setOnValueChangeListener { _, new ->
+            setSeason(new)
+            invalidateMaxDay()
+        }
     }
 
     private fun configureTime() {
@@ -112,7 +121,16 @@ class MainActivity : AppCompatActivity() {
             }
         })
         setTimeOfDay(time.value) // call for init value
-        time.setOnValueChangeListener(::setTimeOfDay)
+        time.setOnValueChangeListener { _, new -> setTimeOfDay(new) }
+    }
+
+    private fun invalidateMaxDay() {
+        val date = Calendar.getInstance()
+
+        date.set(Calendar.MONTH, month.value.toInt() - 1)
+        date.set(Calendar.YEAR, year.value.toInt())
+
+        day.maxValue = date.getActualMaximum(Calendar.DAY_OF_MONTH).toFloat()
     }
 
     private fun setSeason(value: Float) {
