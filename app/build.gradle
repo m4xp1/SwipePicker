@@ -2,6 +2,11 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 
+ext {
+    versionCode = 100
+    versionName = '1.0.0'
+}
+
 android {
     compileSdkVersion project.properties.compileSdkVersion
 
@@ -9,8 +14,8 @@ android {
         applicationId "one.xcorp.swipepicker"
         minSdkVersion project.properties.minSdkVersion
         targetSdkVersion project.properties.targetSdkVersion
-        versionCode 100
-        versionName "1.0.0"
+        versionCode versionCode
+        versionName versionName
     }
     buildTypes {
         release {
@@ -22,7 +27,7 @@ android {
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_plugin"
     implementation "com.android.support:appcompat-v7:$support_v7"
     implementation "com.android.support.constraint:constraint-layout:1.1.2"
     implementation project(':swipepicker')

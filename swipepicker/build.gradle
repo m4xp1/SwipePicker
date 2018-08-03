@@ -1,14 +1,20 @@
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 
+ext {
+    versionCode = 100
+    versionName = '1.0.0'
+    versionDescription = 'Development of a component is complete.'
+}
+
 android {
     compileSdkVersion project.properties.compileSdkVersion
 
     defaultConfig {
         minSdkVersion project.properties.minSdkVersion
         targetSdkVersion project.properties.targetSdkVersion
-        versionCode 100
-        versionName "1.0.0"
+        versionCode versionCode
+        versionName versionName
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
@@ -22,9 +28,11 @@ android {
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_plugin"
     implementation "com.android.support:appcompat-v7:$support_v7"
     testImplementation "junit:junit:4.12"
     androidTestImplementation "com.android.support.test:runner:1.0.2"
     androidTestImplementation "com.android.support.test.espresso:espresso-core:3.0.2"
 }
+
+apply from: 'publish.gradle'

@@ -1,0 +1,33 @@
+apply plugin: 'maven-publish'
+apply plugin: 'com.jfrog.bintray'
+
+publishing {
+    publications {
+        Production(MavenPublication) {
+            artifact("$buildDir/outputs/aar/app-release.aar")
+            groupId 'one.xcorp.widget'
+            artifactId 'swipe-picker'
+            version versionName
+        }
+    }
+}
+
+bintray {
+    user = findProperty('user')
+    key = findProperty('key')
+    publications = ['Production']
+    configurations = ['archives']
+
+    pkg {
+        userOrg = 'xcorp'
+        repo = 'android'
+        name = 'swipe-picker'
+
+        version {
+            name = versionName
+            vcsTag = versionName
+            desc = versionDescription
+            released = new Date()
+        }
+    }
+}
