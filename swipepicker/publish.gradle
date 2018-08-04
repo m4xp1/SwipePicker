@@ -1,6 +1,6 @@
-apply plugin: 'org.jetbrains.dokka-android'
 apply plugin: 'maven-publish'
 apply plugin: 'com.jfrog.bintray'
+apply plugin: 'org.jetbrains.dokka-android'
 
 dokka {
     outputFormat = 'javadoc'
@@ -19,13 +19,13 @@ task sourcesJar(type: Jar) {
 
 publishing {
     publications {
-        Production(MavenPublication) {
+        production(MavenPublication) {
+            artifact javadocJar
+            artifact sourcesJar
+            artifact bundleRelease
             groupId 'one.xcorp.widget'
             artifactId 'swipe-picker'
             version versionName
-            artifact bundleRelease
-            artifact javadocJar
-            artifact sourcesJar
 
             pom.withXml {
                 def dependenciesNode = asNode().appendNode('dependencies')
@@ -45,7 +45,7 @@ publishing {
 bintray {
     user = findProperty('user')
     key = findProperty('key')
-    publications = ['Production']
+    publications = ['production']
     configurations = ['archives']
 
     pkg {
