@@ -1,13 +1,31 @@
+apply plugin: 'org.jetbrains.dokka-android'
 apply plugin: 'maven-publish'
 apply plugin: 'com.jfrog.bintray'
+
+dokka {
+    outputFormat = 'javadoc'
+    outputDirectory = "$buildDir/javadoc"
+}
+
+task javadocJar(type: Jar, dependsOn: dokka) {
+    classifier = 'javadoc'
+    from "$buildDir/javadoc"
+}
+
+task sourcesJar(type: Jar) {
+    from android.sourceSets.main.java.srcDirs
+    classifier = 'sources'
+}
 
 publishing {
     publications {
         Production(MavenPublication) {
-            artifact("$buildDir/outputs/aar/swipepicker-release.aar")
             groupId 'one.xcorp.widget'
             artifactId 'swipe-picker'
             version versionName
+            artifact bundleRelease
+            artifact javadocJar
+            artifact sourcesJar
 
             pom.withXml {
                 def dependenciesNode = asNode().appendNode('dependencies')
@@ -39,7 +57,7 @@ bintray {
             name = versionName
             vcsTag = versionName
             desc = versionDescription
-            released = new Date()
+            released = new Date().toString()
         }
     }
 }
