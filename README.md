@@ -3,9 +3,9 @@
 
 **SwipePicker** - a widget for Android that allows the user to enter different values, such as: time, date, number, without additional dialog windows using the swipe gestures.
 
-<img src="https://github.com/m4xp1/SwipePicker/releases/download/v1.0.0/screen-capture-1.gif" alt="sample 1" title="sample 1" height="600" /> <img src="https://github.com/m4xp1/SwipePicker/releases/download/v1.0.0/screen-capture-2.gif" alt="sample 2" title="sample 2" height="600" />
-<img src="https://github.com/m4xp1/SwipePicker/releases/download/v1.0.0/screen-capture-3.gif" alt="sample 3" title="sample 3" height="600" />
-<img src="https://github.com/m4xp1/SwipePicker/releases/download/v1.0.0/screen-capture-4.gif" alt="sample 4" title="sample 4" height="600" />
+<img src="https://raw.githubusercontent.com/m4xp1/SwipePicker/master/app/release/screen-capture-1.gif" height="380" /> <img src="https://raw.githubusercontent.com/m4xp1/SwipePicker/master/app/release/screen-capture-2.gif" height="380" />
+
+<img src="https://raw.githubusercontent.com/m4xp1/SwipePicker/master/app/release/screen-capture-3.gif" height="380" /> <img src="https://raw.githubusercontent.com/m4xp1/SwipePicker/master/app/release/screen-capture-4.gif" height="380" />
 
 ## Setup
 To use **SwipePicker** in your projects, simply add the library as a dependency to your module **build.gradle**.
