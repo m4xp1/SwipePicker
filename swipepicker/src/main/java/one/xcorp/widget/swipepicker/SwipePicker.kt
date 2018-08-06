@@ -55,7 +55,7 @@ class SwipePicker : LinearLayout {
         }
     var allowDeactivate = true
     var allowFling = true
-    var hitTextSize: Float
+    var hintTextSize: Float
         get() = hintTextView.textSize
         set(value) = hintTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, value)
     var hintTextColor: ColorStateList
