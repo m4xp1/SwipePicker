@@ -2,8 +2,8 @@ apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 
 ext {
-    versionCode = 100
-    versionName = '1.0.0'
+    versionCode = 110
+    versionName = '1.1.0'
     versionDescription = 'Development of a component is complete.'
 }
 
