@@ -20,15 +20,36 @@ task sourcesJar(type: Jar) {
 publishing {
     publications {
         production(MavenPublication) {
+            groupId = 'one.xcorp.widget'
+            artifactId = 'swipe-picker'
+            version = versionName
+
             artifact javadocJar
             artifact sourcesJar
             artifact bundleRelease
-            groupId 'one.xcorp.widget'
-            artifactId 'swipe-picker'
-            version versionName
 
             pom.withXml {
-                def dependenciesNode = asNode().appendNode('dependencies')
+                def root = asNode()
+                root.appendNode('name', 'SwipePicker')
+                root.appendNode('url', 'https://github.com/m4xp1/SwipePicker')
+                root.appendNode('description', 'A widget for Android that allows the user to enter different values, such as: time, date, number, without additional dialog windows using the swipe gestures.')
+                root.appendNode('inceptionYear', '2018')
+
+                def licenseNode = root.appendNode('licenses').appendNode('license')
+                licenseNode.appendNode('name', 'MIT License')
+                licenseNode.appendNode('url', 'https://github.com/m4xp1/SwipePicker/blob/master/LICENSE')
+
+                def developerNode = root.appendNode('developers').appendNode('developer')
+                developerNode.appendNode('id', 'm4xp1')
+                developerNode.appendNode('name', 'Dmitriy Makarov')
+                developerNode.appendNode('email', 'dm@xcorp.one')
+
+                def scmNode = root.appendNode('scm')
+                scmNode.appendNode('connection', 'scm:git:git://github.com/m4xp1/SwipePicker.git')
+                scmNode.appendNode('developerConnection', 'scm:git:ssh://github.com/m4xp1/SwipePicker.git')
+                scmNode.appendNode('url', 'https://github.com/m4xp1/SwipePicker')
+
+                def dependenciesNode = root.appendNode('dependencies')
                 configurations.implementation.allDependencies.each {
                     if (it.name != 'unspecified') {
                         def dependencyNode = dependenciesNode.appendNode('dependency')
