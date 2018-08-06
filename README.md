@@ -13,7 +13,7 @@ To use **SwipePicker** in your projects, simply add the library as a dependency 
 ##### Gradle
 ```
 dependencies {
-  implementation 'one.xcorp.widget:swipe-picker:1.1.0'
+    implementation 'one.xcorp.widget:swipe-picker:1.1.0'
 }
 ```
 
