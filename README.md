@@ -27,7 +27,7 @@ dependencies {
 </dependency>
 ```
 
-Alternatively you can directly import the [`/swipepicker`](https://github.com/m4xp1/SwipePicker/tree/master/swipepicker) module or [`swipe-picker-1.1.0.aar`](https://bintray.com/xcorp/android/download_file?file_path=one%2Fxcorp%2Fwidget%2Fswipe-picker%2F1.0.0%2Fswipe-picker-1.1.0.aar) file into your Android Studio project and add it as a dependency in your **build.gradle**.
+Alternatively you can directly import the [`/swipepicker`](https://github.com/m4xp1/SwipePicker/tree/master/swipepicker) module or [`swipe-picker-1.1.0.aar`](https://bintray.com/xcorp/android/download_file?file_path=one%2Fxcorp%2Fwidget%2Fswipe-picker%2F1.1.0%2Fswipe-picker-1.1.0.aar) file into your Android Studio project and add it as a dependency in your **build.gradle**.
 
 ## Usage
 **SwipePicker** can be added as a custom view to any layout. For more detailed code example to use the library, please refer to the [`/sample`](https://github.com/m4xp1/SwipePicker/tree/master/app) app.
