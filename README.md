@@ -2,7 +2,6 @@
   <img width="400" height="116 " src="https://user-images.githubusercontent.com/40801473/44398483-dc270b80-a53b-11e8-8325-9d1c7e6d8b4e.png">
 </p>
 
-# SwipePicker 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![MinSdk: 14](https://img.shields.io/badge/minSdk-14-green.svg)](https://developer.android.com/about/versions/android-4.0) [![write: Kotlin](https://img.shields.io/badge/write-Kotlin-orange.svg)](https://kotlinlang.org/) [ ![Download](https://api.bintray.com/packages/xcorp/android/swipe-picker/images/download.svg) ](https://bintray.com/xcorp/android/swipe-picker/_latestVersion)
 
 **SwipePicker** - a widget for Android that allows the user to enter different values, such as: time, date, number, without additional dialog windows using the swipe gestures.
