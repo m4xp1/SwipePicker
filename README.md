@@ -1,6 +1,7 @@
 <p align="center">
   <img width="400" height="116 " src="https://user-images.githubusercontent.com/40801473/44398483-dc270b80-a53b-11e8-8325-9d1c7e6d8b4e.png">
 </p>
+<br/>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![MinSdk: 14](https://img.shields.io/badge/minSdk-14-green.svg)](https://developer.android.com/about/versions/android-4.0) [![write: Kotlin](https://img.shields.io/badge/write-Kotlin-orange.svg)](https://kotlinlang.org/) [ ![Download](https://api.bintray.com/packages/xcorp/android/swipe-picker/images/download.svg) ](https://bintray.com/xcorp/android/swipe-picker/_latestVersion)
 
@@ -157,7 +158,8 @@ We use [SemVer](http://semver.org/) for versioning. For the versions available, 
 
 ## Authors
 
-* **Dmitriy Makarov**
+* [**Dmitriy Makarov**](https://github.com/m4xp1)
+* [**Graphic Designer**](https://github.com/zuurw) - icon and logotype
 
 See also the list of [contributors](https://github.com/m4xp1/SwipePicker/graphs/contributors) who participated in this project.
 
