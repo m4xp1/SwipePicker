@@ -4,7 +4,7 @@ apply plugin: 'kotlin-android-extensions'
 
 ext {
     versionCode = 100
-    versionName = '1.0.0'
+    versionName = '1.0.1'
 }
 
 android {
