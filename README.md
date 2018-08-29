@@ -146,7 +146,7 @@ swipepicker.setScaleHandler(object : SwipePicker.ScaleHandler {
 
 ## Demo
 
-[Download](https://github.com/m4xp1/SwipePicker/releases/download/v1.1.0/swipepicker-v1.1.0.apk)
+[Download](https://github.com/m4xp1/SwipePicker/releases/download/v1.1.1/swipepicker-v1.1.1.apk)
 
 ## Apps using the SwipePicker
 
