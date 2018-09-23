@@ -15,14 +15,14 @@
 To use **SwipePicker** in your projects, simply add the library as a dependency to your module **build.gradle**.
 
 ##### Gradle
-```
+```gradle
 dependencies {
     implementation 'one.xcorp.widget:swipe-picker:1.1.0'
 }
 ```
 
 ##### Maven
-```
+```xml
 <dependency> 
     <groupId>one.xcorp.widget</groupId> 
     <artifactId>swipe-picker</artifactId> 
@@ -35,7 +35,7 @@ Alternatively you can directly import the [`/swipepicker`](https://github.com/m4
 
 ## Usage
 **SwipePicker** can be added as a custom view to any layout. For more detailed code example to use the library, please refer to the [`/sample`](https://github.com/m4xp1/SwipePicker/tree/master/app) app.
-```
+```xml
  <one.xcorp.widget.swipepicker.SwipePicker
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -45,7 +45,7 @@ Alternatively you can directly import the [`/swipepicker`](https://github.com/m4
         app:value="5" />
 ```
 You can then either set the xml parameters to configure the view or do it programmatically. You can also receive notifications of status changes:
-```
+```kotlin
  swipepicker.setOnStateChangeListener(object : SwipePicker.OnStateChangeListener {
             override fun onActivated(view: SwipePicker, isActivated: Boolean) {
                 // called when view state is activated and show value.
@@ -59,7 +59,7 @@ You can then either set the xml parameters to configure the view or do it progra
         })
 ```
 Or value changes:
-```
+```kotlin
 swipepicker.setOnValueChangeListener(object : SwipePicker.OnValueChangeListener {
             override fun onValueChanged(view: SwipePicker, oldValue: Float, newValue: Float) {
                 // is called when the value is changed.
@@ -67,7 +67,7 @@ swipepicker.setOnValueChangeListener(object : SwipePicker.OnValueChangeListener 
         })
 ```
 You can also affect the currently displayed text for the value:
-```
+```kotlin
 swipepicker.setValueTransformer(object : SwipePicker.ValueTransformer {
             override fun stringToFloat(view: SwipePicker, value: String): Float? {
                 // convert the string to a value or in case of an error return
@@ -81,7 +81,7 @@ swipepicker.setValueTransformer(object : SwipePicker.ValueTransformer {
         })
 ```
 Finally, you can influence the calculation of values during the swipe gesture:
-```
+```kotlin
 swipepicker.setScaleHandler(object : SwipePicker.ScaleHandler {
             override fun onStick(view: SwipePicker, value: Float): Float {
                 // called when you want to stick a value to the scale,
