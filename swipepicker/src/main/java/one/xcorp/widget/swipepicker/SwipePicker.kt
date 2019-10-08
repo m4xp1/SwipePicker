@@ -72,9 +72,9 @@ class SwipePicker : LinearLayout {
         set(value) {
             // clear tint on previously background
             val background = backgroundInput
-            if (background != null) {
-                DrawableCompat.setTintList(background, null)
-                DrawableCompat.setTintMode(background, PorterDuff.Mode.SRC_IN)
+            background?.let {
+                DrawableCompat.setTintList(it, null)
+                DrawableCompat.setTintMode(it, PorterDuff.Mode.SRC_IN)
             }
             // set new background and invalidate tint
             ViewCompat.setBackground(inputAreaView, value)
@@ -151,10 +151,9 @@ class SwipePicker : LinearLayout {
                 newValue = scaleHandler.onStick(this, newValue)
             }
 
-            if (newValue < minValue) {
-                newValue = minValue
-            } else if (newValue > maxValue) {
-                newValue = maxValue
+            when {
+                newValue < minValue -> newValue = minValue
+                newValue > maxValue -> newValue = maxValue
             }
 
             if (newValue != oldValue) {
@@ -223,16 +222,22 @@ class SwipePicker : LinearLayout {
         obtainStyledAttributes(context, attrs, defStyleAttr, defStyleRes)
 
         inputAreaView.setOnTouchListener { _, e -> onTouch(e) }
-        inputEditText.setOnBackPressedListener { onInputCancel() }
-        inputEditText.setOnEditorActionListener { _, a, e -> onInputDone(a, e) }
-        inputEditText.setOnFocusChangeListener { _, h -> onFocusChange(h) }
+        inputEditText.apply {
+            setOnBackPressedListener { onInputCancel() }
+            setOnEditorActionListener { _, a, e -> onInputDone(a, e) }
+            setOnFocusChangeListener { _, h -> onFocusChange(h) }
+        }
 
         invalidateValue()
     }
 
     // It is required that the input area does not hide a hint.
     override fun getChildDrawingOrder(childCount: Int, i: Int) =
-            if (i == 0) 1 else if (i == 1) 0 else i
+            when (i) {
+                0 -> 1
+                1 -> 0
+                else -> i
+            }
 
     private fun calculateHintPosition(activated: Boolean): Float {
         if (activated) return 0f
@@ -259,58 +264,55 @@ class SwipePicker : LinearLayout {
     }
 
     private fun obtainStyledAttributes(
-            context: Context, attrs: AttributeSet?, defStyleAttr: Int, defStyleRes: Int) {
-        val typedArray = context.obtainStyledAttributes(
-                attrs, R.styleable.SwipePicker, defStyleAttr, defStyleRes)
-
-        minimumWidth = typedArray.getDimensionPixelSize(
-                R.styleable.SwipePicker_android_minWidth,
-                resources.getDimensionPixelSize(R.dimen.swipePicker_minWidth))
-        hint = typedArray.getString(R.styleable.SwipePicker_android_hint)
-        activated = typedArray.getBoolean(
-                R.styleable.SwipePicker_android_state_activated, activated)
-        allowDeactivate = typedArray
-                .getBoolean(R.styleable.SwipePicker_allowDeactivate, allowDeactivate)
-        allowFling = typedArray
-                .getBoolean(R.styleable.SwipePicker_allowFling, allowFling)
-        setHintTextAppearance(typedArray.getResourceId(
-                R.styleable.SwipePicker_hintTextAppearance,
-                R.style.XcoRp_TextAppearance_SwipePicker_Hint))
-        setInputTextAppearance(typedArray.getResourceId(
-                R.styleable.SwipePicker_inputTextAppearance,
-                R.style.XcoRp_TextAppearance_SwipePicker_Input))
-        backgroundInput = typedArray.getDrawable(R.styleable.SwipePicker_backgroundInput)
-        if (typedArray.hasValue(R.styleable.SwipePicker_backgroundInputTint)) {
-            backgroundInputTint = typedArray
-                    .getColorStateList(R.styleable.SwipePicker_backgroundInputTint)
+            context: Context, attrs: AttributeSet?, defStyleAttr: Int, defStyleRes: Int) =
+            with(context.obtainStyledAttributes(
+                    attrs, R.styleable.SwipePicker, defStyleAttr, defStyleRes)) {
+                try {
+                    minimumWidth = getDimensionPixelSize(
+                            R.styleable.SwipePicker_android_minWidth,
+                            resources.getDimensionPixelSize(R.dimen.swipePicker_minWidth))
+                    hint = getString(R.styleable.SwipePicker_android_hint)
+                    activated = getBoolean(
+                            R.styleable.SwipePicker_android_state_activated, activated)
+                    allowDeactivate = getBoolean(R.styleable.SwipePicker_allowDeactivate, allowDeactivate)
+                    allowFling = getBoolean(R.styleable.SwipePicker_allowFling, allowFling)
+                    setHintTextAppearance(getResourceId(
+                            R.styleable.SwipePicker_hintTextAppearance,
+                            R.style.XcoRp_TextAppearance_SwipePicker_Hint))
+                    setInputTextAppearance(getResourceId(
+                            R.styleable.SwipePicker_inputTextAppearance,
+                            R.style.XcoRp_TextAppearance_SwipePicker_Input))
+                    backgroundInput = getDrawable(R.styleable.SwipePicker_backgroundInput)
+                    if (hasValue(R.styleable.SwipePicker_backgroundInputTint)) {
+                        backgroundInputTint = getColorStateList(R.styleable.SwipePicker_backgroundInputTint)
+                    }
+                    if (hasValue(R.styleable.SwipePicker_backgroundInputTintMode)) {
+                        backgroundInputTintMode = getTintMode(R.styleable.SwipePicker_backgroundInputTintMode, backgroundInputTintMode)
+                    }
+                    manualInput = getBoolean(R.styleable.SwipePicker_manualInput, manualInput)
+                    setMaxLength(getInt(R.styleable.SwipePicker_android_maxLength,
+                            resources.getInteger(R.integer.swipePicker_maxLength)))
+                    inputType = getInt(
+                            R.styleable.SwipePicker_android_inputType, InputType.TYPE_CLASS_NUMBER)
+                    if (hasValue(R.styleable.SwipePicker_anchor)) {
+                        scale = listOf(getFloat(R.styleable.SwipePicker_anchor, 0f))
+                    }
+                    if (!isInEditMode && hasValue(R.styleable.SwipePicker_scale)) {
+                        scale = getFloatArray(R.styleable.SwipePicker_scale).toList()
+                    }
+                    minValue = getFloat(R.styleable.SwipePicker_minValue, minValue)
+                    maxValue = getFloat(R.styleable.SwipePicker_maxValue, maxValue)
+                    require(minValue < maxValue) { "The minimum value is greater than the maximum." }
+                    step = getFloat(R.styleable.SwipePicker_step, step)
+                    value = getFloat(R.styleable.SwipePicker_value, value)
+                    sticky = getBoolean(R.styleable.SwipePicker_sticky, sticky)
+                    looped = getBoolean(R.styleable.SwipePicker_looped, looped)
+                    hoverViewStyle = getResourceId(
+                            R.styleable.SwipePicker_hoverViewStyle, hoverViewStyle)
+                } finally {
+                    recycle()
+                }
         }
-        if (typedArray.hasValue(R.styleable.SwipePicker_backgroundInputTintMode)) {
-            backgroundInputTintMode = typedArray
-                    .getTintMode(R.styleable.SwipePicker_backgroundInputTintMode, backgroundInputTintMode)
-        }
-        manualInput = typedArray.getBoolean(R.styleable.SwipePicker_manualInput, manualInput)
-        setMaxLength(typedArray.getInt(R.styleable.SwipePicker_android_maxLength,
-                resources.getInteger(R.integer.swipePicker_maxLength)))
-        inputType = typedArray.getInt(
-                R.styleable.SwipePicker_android_inputType, InputType.TYPE_CLASS_NUMBER)
-        if (typedArray.hasValue(R.styleable.SwipePicker_anchor)) {
-            scale = listOf(typedArray.getFloat(R.styleable.SwipePicker_anchor, 0f))
-        }
-        if (!isInEditMode && typedArray.hasValue(R.styleable.SwipePicker_scale)) {
-            scale = typedArray.getFloatArray(R.styleable.SwipePicker_scale).toList()
-        }
-        minValue = typedArray.getFloat(R.styleable.SwipePicker_minValue, minValue)
-        maxValue = typedArray.getFloat(R.styleable.SwipePicker_maxValue, maxValue)
-        require(minValue < maxValue) { "The minimum value is greater than the maximum." }
-        step = typedArray.getFloat(R.styleable.SwipePicker_step, step)
-        value = typedArray.getFloat(R.styleable.SwipePicker_value, value)
-        sticky = typedArray.getBoolean(R.styleable.SwipePicker_sticky, sticky)
-        looped = typedArray.getBoolean(R.styleable.SwipePicker_looped, looped)
-        hoverViewStyle = typedArray.getResourceId(
-                R.styleable.SwipePicker_hoverViewStyle, hoverViewStyle)
-
-        typedArray.recycle()
-    }
 
     /**
      * Read floating array from resources xml.
@@ -329,7 +331,7 @@ class SwipePicker : LinearLayout {
                 result[i] = typedArray.getFloat(i, 0f)
             }
 
-            if (!result.isEmpty()) result else throw IllegalArgumentException("Array is empty.")
+            if (result.isNotEmpty()) result else throw IllegalArgumentException("Array is empty.")
         } catch (e: Throwable) {
             throw IllegalArgumentException("Can't get float array by specified resource ID.", e)
         } finally {
@@ -337,17 +339,16 @@ class SwipePicker : LinearLayout {
         }
     }
 
-    private fun TypedArray.getTintMode(resId: Int, default: PorterDuff.Mode): PorterDuff.Mode {
-        return when (getInt(resId, -1)) {
-            3 -> PorterDuff.Mode.SRC_OVER
-            5 -> PorterDuff.Mode.SRC_IN
-            9 -> PorterDuff.Mode.SRC_ATOP
-            14 -> PorterDuff.Mode.MULTIPLY
-            15 -> PorterDuff.Mode.SCREEN
-            16 -> PorterDuff.Mode.ADD
-            else -> default
-        }
-    }
+    private fun TypedArray.getTintMode(resId: Int, default: PorterDuff.Mode) =
+            when (getInt(resId, -1)) {
+                3 -> PorterDuff.Mode.SRC_OVER
+                5 -> PorterDuff.Mode.SRC_IN
+                9 -> PorterDuff.Mode.SRC_ATOP
+                14 -> PorterDuff.Mode.MULTIPLY
+                15 -> PorterDuff.Mode.SCREEN
+                16 -> PorterDuff.Mode.ADD
+                else -> default
+            }
 
     fun setHintTextSize(unit: Int, size: Float) = hintTextView.setTextSize(unit, size)
 
@@ -393,11 +394,11 @@ class SwipePicker : LinearLayout {
 
     fun setValue(value: CharSequence): Boolean {
         val result = valueTransformer.stringToFloat(this, value.toString())
-        if (result != null) {
-            this.value = result
-            return true
-        }
-        return false
+
+        return result?.let {
+            this.value = it
+            true
+        } ?: false
     }
 
     fun setValueTransformer(transformer: ValueTransformer) {
@@ -507,9 +508,7 @@ class SwipePicker : LinearLayout {
         return result
     }
 
-    override fun isActivated(): Boolean {
-        return activated
-    }
+    override fun isActivated() = activated
 
     override fun setActivated(activated: Boolean) {
         if (activated == isActivated) return
@@ -593,25 +592,31 @@ class SwipePicker : LinearLayout {
         }
 
         inputEditText.isEnabled = enable
+
         if (enable) {
-            inputEditText.requestFocus()
-            inputEditText.selectAll() // selectAllOnFocus not always working when rotation
-            inputEditText.showKeyboard()
+            with(inputEditText) {
+                requestFocus()
+                selectAll() // selectAllOnFocus not always working when rotation
+                showKeyboard()
+            }
         } else {
-            inputEditText.clearFocus()
-            inputEditText.hideKeyBoard()
+            with(inputEditText) {
+                clearFocus()
+                hideKeyBoard()
+            }
         }
     }
 
-    private fun onInputCancel(): Boolean {
-        if (isSelected) {
-            isSelected = false
-            return true
-        }
-        return false
-    }
+    private fun onInputCancel() =
+            if (isSelected) {
+                isSelected = false
+                true
+            } else {
+                false
+            }
 
-    private fun onInputDone(actionId: Int, event: KeyEvent?): Boolean {
+
+    private fun onInputDone(actionId: Int, event: KeyEvent?) =
         if (actionId == EditorInfo.IME_ACTION_DONE || event?.keyCode == KeyEvent.KEYCODE_ENTER) {
             val result = valueTransformer.stringToFloat(this, inputEditText.text.toString())
 
@@ -623,10 +628,10 @@ class SwipePicker : LinearLayout {
             }
 
             playSoundEffect(CLICK)
-            return true
+            true
+        } else {
+            false
         }
-        return false
-    }
 
     private fun onFocusChange(hasFocus: Boolean) {
         if (!hasFocus) {
@@ -674,7 +679,7 @@ class SwipePicker : LinearLayout {
         hintTextView.animate().alpha(1f).setDuration(0).start()
         hoverView.animate().alpha(0f).setDuration(0).start()
 
-        if (hoverView.parent != null) {
+        hoverView.parent?.let {
             windowManager.removeViewImmediate(hoverView)
         }
     }
