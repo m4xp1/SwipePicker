@@ -118,16 +118,20 @@ internal class ScaleHelper {
      */
     fun stickToScale(scale: List<Float>, step: Float, value: Float): Float {
         // check whether the value is outside
-        if (value < scale.first()) { // outside value from left side
-            return getClosestOutside(scale.first(), step, value)
-        } else if (value > scale.last()) { // outside value from right side
-            return getClosestOutside(scale.last(), step, value)
+        when {
+            value < scale.first() -> // outside value from left side
+                return getClosestOutside(scale.first(), step, value)
+            value > scale.last() -> // outside value from right side
+                return getClosestOutside(scale.last(), step, value)
+            // value on the scale, we find its index
+            // value is absent on the scale, we return the closest
+            else -> {
+                var index = findIndexOnScale(scale, value, 0)
+                if (index >= 0) return value else index = -(index + 1)
+                // value is absent on the scale, we return the closest
+                return getClosestValue(scale[index - 1], scale[index], value)
+            }
         }
-        // value on the scale, we find its index
-        var index = findIndexOnScale(scale, value, 0)
-        if (index >= 0) return value else index = -(index + 1)
-        // value is absent on the scale, we return the closest
-        return getClosestValue(scale[index - 1], scale[index], value)
     }
 
     /**
@@ -198,12 +202,13 @@ internal class ScaleHelper {
     private fun moveByScale(scale: List<Float>, step: Float, index: Int, division: Int): Float {
         val destination = index + division
 
-        if (destination < 0) { // move on the scale outwards to the left
-            return moveByStep(step, scale.first(), destination)
-        } else if (destination > scale.lastIndex) { // move on the scale outwards to the right
-            return moveByStep(step, scale.last(), (destination - scale.lastIndex))
+        return when {
+            destination < 0 -> // move on the scale outwards to the left
+                moveByStep(step, scale.first(), destination)
+            destination > scale.lastIndex -> // move on the scale outwards to the right
+                moveByStep(step, scale.last(), (destination - scale.lastIndex))
+            // move on the scale
+            else -> scale[destination]
         }
-        // move on the scale
-        return scale[destination]
     }
 }
