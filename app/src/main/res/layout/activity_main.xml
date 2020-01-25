@@ -24,7 +24,7 @@
     <one.xcorp.widget.swipepicker.SwipePicker
         android:id="@+id/scale"
         android:layout_width="wrap_content"
-        android:layout_height="55dp"
+        android:layout_height="wrap_content"
         android:inputType="numberSigned|numberDecimal"
         android:state_activated="true"
         app:allowDeactivate="false"
