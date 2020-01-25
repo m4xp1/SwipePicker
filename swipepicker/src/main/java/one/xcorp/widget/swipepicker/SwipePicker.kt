@@ -259,7 +259,7 @@ class SwipePicker : LinearLayout {
         width = MATCH_PARENT
         height = MATCH_PARENT
         format = PixelFormat.TRANSLUCENT
-        flags = (FLAG_LAYOUT_IN_SCREEN or FLAG_NOT_FOCUSABLE or FLAG_NOT_TOUCHABLE)
+        flags = (FLAG_LAYOUT_NO_LIMITS or FLAG_NOT_FOCUSABLE or FLAG_NOT_TOUCHABLE)
         type = TYPE_APPLICATION_PANEL
     }
 
@@ -312,7 +312,7 @@ class SwipePicker : LinearLayout {
                 } finally {
                     recycle()
                 }
-        }
+            }
 
     /**
      * Read floating array from resources xml.
@@ -617,21 +617,21 @@ class SwipePicker : LinearLayout {
 
 
     private fun onInputDone(actionId: Int, event: KeyEvent?) =
-        if (actionId == EditorInfo.IME_ACTION_DONE || event?.keyCode == KeyEvent.KEYCODE_ENTER) {
-            val result = valueTransformer.stringToFloat(this, inputEditText.text.toString())
+            if (actionId == EditorInfo.IME_ACTION_DONE || event?.keyCode == KeyEvent.KEYCODE_ENTER) {
+                val result = valueTransformer.stringToFloat(this, inputEditText.text.toString())
 
-            if (result == null) {
-                inputEditText.selectAll()
+                if (result == null) {
+                    inputEditText.selectAll()
+                } else {
+                    value = result
+                    isSelected = false
+                }
+
+                playSoundEffect(CLICK)
+                true
             } else {
-                value = result
-                isSelected = false
+                false
             }
-
-            playSoundEffect(CLICK)
-            true
-        } else {
-            false
-        }
 
     private fun onFocusChange(hasFocus: Boolean) {
         if (!hasFocus) {
