@@ -6,7 +6,7 @@ ext {
             targetSdkVersion  : 29,
             versionCode       : 120,
             versionName       : "1.2.0",
-            versionDescription: "Development of a component is complete."
+            versionDescription: "Update dependencies and transfer to androidx. Fix wrong showing position for hover view."
     ]
 
     gradle_version = '3.5.3'
