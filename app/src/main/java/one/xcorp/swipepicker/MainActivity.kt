@@ -2,13 +2,13 @@ package one.xcorp.swipepicker
 
 import android.graphics.Color
 import android.os.Bundle
-import android.support.annotation.ColorInt
-import android.support.annotation.StringRes
-import android.support.v4.content.ContextCompat
-import android.support.v7.app.AppCompatActivity
 import android.view.View.INVISIBLE
 import android.view.View.VISIBLE
 import android.widget.Toast
+import androidx.annotation.ColorInt
+import androidx.annotation.StringRes
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat.getColor
 import kotlinx.android.synthetic.main.activity_main.*
 import one.xcorp.swipepicker.date.StringInputFilter
 import one.xcorp.swipepicker.time.LocalTime
@@ -41,7 +41,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun configureScale() {
-        val negativeColor = ContextCompat.getColor(this, R.color.negative_background)
+        val negativeColor = getColor(this, R.color.negative_background)
 
         scale.setOnValueChangeListener { _, new ->
             scale.setTintColor(if (new < 0) negativeColor else Color.TRANSPARENT)
@@ -81,7 +81,7 @@ class MainActivity : AppCompatActivity() {
                 val index = monthsValues.indexOfFirst { it.startsWith(value, true) }
                 val number = (index + 1).toFloat()
                 // If string empty or value not found then set month by number or don't change value.
-                val coincidence = number > 0 && !value.isEmpty()
+                val coincidence = number > 0 && value.isNotEmpty()
                 return if (coincidence) number else super.stringToFloat(view, value)
             }
 
@@ -142,7 +142,7 @@ class MainActivity : AppCompatActivity() {
             else -> Pair(R.string.winter, R.color.winter_background)
         }
 
-        val color = ContextCompat.getColor(this, colorId)
+        val color = getColor(this, colorId)
 
         monthLabel.setText(labelId)
         monthLabel.setTextColor(color)
@@ -161,8 +161,8 @@ class MainActivity : AppCompatActivity() {
         val timeOfDay = selectedTime.getTimeOfDay(
                 DAWN_START, DAWN_DURATION, SUNSET_START, SUNSET_DURATION)
 
-        val dayColor = ContextCompat.getColor(this, R.color.day_background)
-        val nightColor = ContextCompat.getColor(this, R.color.night_background)
+        val dayColor = getColor(this, R.color.day_background)
+        val nightColor = getColor(this, R.color.night_background)
 
         val fraction = (value - timeOfDay.start) / timeOfDay.duration()
         val (color, label) = when (timeOfDay.type) {
@@ -177,7 +177,7 @@ class MainActivity : AppCompatActivity() {
         time.setTintColor(color)
         timeLabel.setTextColor(color)
 
-        timeLabel.text = getString(label).toLowerCase()
+        timeLabel.text = getString(label).toLowerCase(Locale.getDefault())
     }
 
     private fun completeTime(value: String): String {

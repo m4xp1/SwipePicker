@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -82,8 +82,8 @@
         android:id="@+id/year"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="@dimen/content_padding"
         android:layout_marginStart="@dimen/content_padding"
+        android:layout_marginLeft="@dimen/content_padding"
         android:hint="@string/year"
         android:maxLength="4"
         app:layout_constraintStart_toEndOf="@+id/month"
@@ -118,15 +118,15 @@
             tools:text="@string/sunset" />
     </one.xcorp.widget.swipepicker.SwipePicker>
 
-    <TextView
+    <androidx.appcompat.widget.AppCompatTextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="@dimen/text_margin"
-        android:layout_marginEnd="@dimen/text_margin"
-        android:layout_marginLeft="@dimen/text_margin"
-        android:layout_marginRight="@dimen/text_margin"
         android:layout_marginStart="@dimen/text_margin"
+        android:layout_marginLeft="@dimen/text_margin"
         android:layout_marginTop="@dimen/text_margin"
+        android:layout_marginEnd="@dimen/text_margin"
+        android:layout_marginRight="@dimen/text_margin"
+        android:layout_marginBottom="@dimen/text_margin"
         android:gravity="center"
         android:lineSpacingExtra="@dimen/text_line_spacing"
         android:text="@string/app_description"
@@ -135,4 +135,4 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/time"
         app:layout_constraintVertical_bias="0.3" />
-</android.support.constraint.ConstraintLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

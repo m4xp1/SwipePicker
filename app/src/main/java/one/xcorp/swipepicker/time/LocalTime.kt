@@ -16,7 +16,7 @@ class LocalTime {
             timeFormat.applyPattern(pattern)
 
             return try {
-                LocalTime(timeFormat.parse(value).time)
+                LocalTime(timeFormat.parse(value)!!.time)
             } catch (e: Exception) {
                 null
             }

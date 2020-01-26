@@ -11,13 +11,6 @@ import android.graphics.drawable.Drawable
 import android.os.Parcel
 import android.os.Parcelable
 import android.os.SystemClock
-import android.support.annotation.ColorInt
-import android.support.v4.graphics.drawable.DrawableCompat.setTintList
-import android.support.v4.graphics.drawable.DrawableCompat.setTintMode
-import android.support.v4.view.GestureDetectorCompat
-import android.support.v4.view.ViewCompat
-import android.support.v4.widget.TextViewCompat
-import android.support.v7.widget.AppCompatTextView
 import android.text.InputFilter
 import android.text.InputType
 import android.util.AttributeSet
@@ -31,6 +24,13 @@ import android.view.WindowManager.LayoutParams.*
 import android.view.inputmethod.EditorInfo
 import android.widget.LinearLayout
 import android.widget.Scroller
+import androidx.annotation.ColorInt
+import androidx.appcompat.widget.AppCompatTextView
+import androidx.core.graphics.drawable.DrawableCompat.setTintList
+import androidx.core.graphics.drawable.DrawableCompat.setTintMode
+import androidx.core.view.GestureDetectorCompat
+import androidx.core.view.ViewCompat.setBackground
+import androidx.core.widget.TextViewCompat.setTextAppearance
 import one.xcorp.widget.swipepicker.R.styleable.SwipePicker
 import java.io.Serializable
 import java.text.NumberFormat
@@ -81,7 +81,7 @@ class SwipePicker : LinearLayout {
                 setTintMode(it, PorterDuff.Mode.SRC_IN)
             }
             // set new background and invalidate tint
-            ViewCompat.setBackground(inputAreaView, value)
+            setBackground(inputAreaView, value)
             backgroundInputTint = backgroundInputTint
             backgroundInputTintMode = backgroundInputTintMode
         }
@@ -360,13 +360,13 @@ class SwipePicker : LinearLayout {
 
     fun setHintTextColor(@ColorInt color: Int) = hintTextView.setTextColor(color)
 
-    fun setHintTextAppearance(resId: Int) = TextViewCompat.setTextAppearance(hintTextView, resId)
+    fun setHintTextAppearance(resId: Int) = setTextAppearance(hintTextView, resId)
 
     fun setInputTextSize(unit: Int, size: Float) = inputEditText.setTextSize(unit, size)
 
     fun setInputTextColor(@ColorInt color: Int) = inputEditText.setTextColor(color)
 
-    fun setInputTextAppearance(resId: Int) = TextViewCompat.setTextAppearance(inputEditText, resId)
+    fun setInputTextAppearance(resId: Int) = setTextAppearance(inputEditText, resId)
 
     fun setBackgroundInputTint(@ColorInt color: Int) {
         backgroundInputTint = ColorStateList.valueOf(color)
@@ -663,7 +663,7 @@ class SwipePicker : LinearLayout {
     }
 
     private fun showHoverView() {
-        hoverView.text = inputEditText.text
+        hoverView.text = inputEditText.text ?: ""
         invalidateHoverViewPosition()
 
         hintTextView.animate().alpha(0f).setDuration(ANIMATION_DURATION).start()
@@ -700,7 +700,7 @@ class SwipePicker : LinearLayout {
         inputEditText.setText(valueTransformer.floatToString(this, value))
         if (isPressed) {
             // get the value from input to take into account the maximum length
-            hoverView.text = inputEditText.text
+            hoverView.text = inputEditText.text ?: ""
             invalidateHoverViewPosition()
         }
     }

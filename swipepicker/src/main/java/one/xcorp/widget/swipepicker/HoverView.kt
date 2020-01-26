@@ -2,11 +2,11 @@ package one.xcorp.widget.swipepicker
 
 import android.content.Context
 import android.graphics.*
-import android.support.annotation.ColorInt
-import android.support.v4.content.ContextCompat
-import android.support.v4.view.ViewCompat.getMinimumWidth
 import android.util.AttributeSet
 import android.view.View
+import androidx.annotation.ColorInt
+import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat.getMinimumWidth
 
 class HoverView : View {
 

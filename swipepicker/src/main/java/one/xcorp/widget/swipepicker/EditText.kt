@@ -5,9 +5,12 @@ import android.util.AttributeSet
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.inputmethod.InputMethodManager
+import androidx.appcompat.widget.AppCompatEditText
 
-internal class EditText(context: Context?, attrs: AttributeSet?) :
-        android.support.v7.widget.AppCompatEditText(context, attrs) {
+internal class EditText(
+        context: Context?,
+        attrs: AttributeSet?
+) : AppCompatEditText(context, attrs) {
 
     private var backPressedListener: (() -> Boolean)? = null
 

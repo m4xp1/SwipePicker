@@ -1,20 +1,15 @@
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 
-ext {
-    versionCode = 110
-    versionName = '1.1.0'
-    versionDescription = 'Development of a component is complete.'
-}
-
 android {
-    compileSdkVersion project.properties.compileSdkVersion
+    compileSdkVersion configuration.compileSdkVersion
+    buildToolsVersion configuration.buildToolsVersion
 
     defaultConfig {
-        minSdkVersion project.properties.minSdkVersion
-        targetSdkVersion project.properties.targetSdkVersion
-        versionCode versionCode
-        versionName versionName
+        minSdkVersion configuration.minSdkVersion
+        targetSdkVersion configuration.targetSdkVersion
+        versionCode configuration.versionCode
+        versionName configuration.versionName
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
@@ -27,12 +22,16 @@ android {
 }
 
 dependencies {
-    implementation fileTree(include: ['*.jar'], dir: 'libs')
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    implementation "com.android.support:appcompat-v7:$support_v7"
-    testImplementation "junit:junit:4.12"
-    androidTestImplementation "com.android.support.test:runner:1.0.2"
-    androidTestImplementation "com.android.support.test.espresso:espresso-core:3.0.2"
+    // Kotlin
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+
+    // UI
+    implementation "androidx.appcompat:appcompat:$appcompat_version"
+
+    // Tests
+    testImplementation "junit:junit:$junit_version"
+    androidTestImplementation "androidx.test.ext:junit:$ext_junit_version"
+    androidTestImplementation "androidx.test.espresso:espresso-core:$espresso_core_version"
 }
 
 apply from: 'publish.gradle'
