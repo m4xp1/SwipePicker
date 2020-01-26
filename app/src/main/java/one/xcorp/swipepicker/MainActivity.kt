@@ -87,7 +87,9 @@ class MainActivity : AppCompatActivity() {
         })
         month.setOnStateChangeListener(stateListener)
         month.setOnValueChangeListener { _, new ->
-            setSeason(new)
+            if (month.isActivated) {
+                setSeason(new)
+            }
             invalidateMaxDay()
         }
         month.value = (date.get(Calendar.MONTH) + 1).toFloat()
