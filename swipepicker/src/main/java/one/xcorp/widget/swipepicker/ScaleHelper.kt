@@ -2,6 +2,7 @@ package one.xcorp.widget.swipepicker
 
 import java.math.RoundingMode
 import java.math.RoundingMode.*
+import kotlin.math.abs
 import kotlin.math.sign
 
 internal class ScaleHelper {
@@ -17,11 +18,11 @@ internal class ScaleHelper {
      */
     fun isBelongsToScale(scale: List<Float>, step: Float, value: Float): Boolean {
         return when {
-        // check outside left
+            // check outside left
             value < scale.first() -> (scale.first() - value) % step == 0f
-        // check outside right
+            // check outside right
             value > scale.last() -> (value - scale.last()) % step == 0f
-        // check on scale
+            // check on scale
             else -> scale.binarySearch(value) > 0
         }
     }
@@ -95,7 +96,7 @@ internal class ScaleHelper {
      * @return Closest value first or second. The first value in priority.
      */
     fun getClosestValue(first: Float, second: Float, value: Float) =
-            if (Math.abs(value - first) <= Math.abs(second - value)) first else second
+            if (abs(value - first) <= abs(second - value)) first else second
 
     private fun getClosestOutside(boundary: Float, step: Float, value: Float): Float {
         if (step == 0f) return boundary
@@ -117,15 +118,12 @@ internal class ScaleHelper {
      * @return Closest value on scale, the closest values to the scale boundary in priority.
      */
     fun stickToScale(scale: List<Float>, step: Float, value: Float): Float {
-        // check whether the value is outside
-        when {
+        when { // check whether the value is outside
             value < scale.first() -> // outside value from left side
                 return getClosestOutside(scale.first(), step, value)
             value > scale.last() -> // outside value from right side
                 return getClosestOutside(scale.last(), step, value)
-            // value on the scale, we find its index
-            // value is absent on the scale, we return the closest
-            else -> {
+            else -> { // value on the scale, we find its index
                 var index = findIndexOnScale(scale, value, 0)
                 if (index >= 0) return value else index = -(index + 1)
                 // value is absent on the scale, we return the closest
@@ -207,8 +205,8 @@ internal class ScaleHelper {
                 moveByStep(step, scale.first(), destination)
             destination > scale.lastIndex -> // move on the scale outwards to the right
                 moveByStep(step, scale.last(), (destination - scale.lastIndex))
-            // move on the scale
-            else -> scale[destination]
+            else -> // move on the scale
+                scale[destination]
         }
     }
 }
