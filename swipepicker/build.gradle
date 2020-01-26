@@ -11,7 +11,7 @@ android {
         versionCode configuration.versionCode
         versionName configuration.versionName
 
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
         release {
@@ -32,6 +32,10 @@ dependencies {
     testImplementation "junit:junit:$junit_version"
     androidTestImplementation "androidx.test.ext:junit:$ext_junit_version"
     androidTestImplementation "androidx.test.espresso:espresso-core:$espresso_core_version"
+}
+
+configurations.all {
+    resolutionStrategy.force "junit:junit:$junit_version"
 }
 
 apply from: 'publish.gradle'
