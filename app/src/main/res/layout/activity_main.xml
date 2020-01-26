@@ -98,7 +98,7 @@
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/content_padding"
         android:hint="@string/time"
-        android:inputType="time"
+        android:inputType="text"
         android:state_activated="true"
         app:anchor="0"
         app:layout_constraintEnd_toEndOf="@+id/year"
