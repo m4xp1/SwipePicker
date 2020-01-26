@@ -641,7 +641,7 @@ class SwipePicker : LinearLayout {
 
     override fun setPressed(pressed: Boolean) {
         // remove all future events associated with changing the state
-        handler.removeCallbacksAndMessages(hoverView)
+        handler?.removeCallbacksAndMessages(hoverView)
 
         if (pressed == isPressed) return
 
