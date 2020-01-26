@@ -42,7 +42,6 @@ class MainActivity : AppCompatActivity() {
 
     private fun configureScale() {
         val negativeColor = getColor(this, R.color.negative_background)
-
         scale.setOnValueChangeListener { _, new ->
             scale.setTintColor(if (new < 0) negativeColor else Color.TRANSPARENT)
         }
@@ -52,27 +51,24 @@ class MainActivity : AppCompatActivity() {
         val date = Calendar.getInstance()
         val stateListener = DateStateChangeListener()
 
-        day.value = (date.get(Calendar.DATE)).toFloat()
         day.setOnStateChangeListener(stateListener)
+        day.value = (date.get(Calendar.DATE)).toFloat()
 
         configureMonth(date, stateListener)
 
-        year.value = (date.get(Calendar.YEAR)).toFloat()
         year.setOnStateChangeListener(stateListener)
         year.setOnValueChangeListener { _, _ ->
             if (month.value == (Calendar.FEBRUARY + 1).toFloat()) {
                 invalidateMaxDay()
             }
         }
-
-        invalidateMaxDay()
+        year.value = (date.get(Calendar.YEAR)).toFloat()
     }
 
     private fun configureMonth(date: Calendar, stateListener: SwipePicker.OnStateChangeListener) {
         val monthsNumbers = (1..12).map(::valueOf).toTypedArray()
         val monthsValues = resources.getStringArray(R.array.months)
 
-        month.value = (date.get(Calendar.MONTH) + 1).toFloat()
         // Instead of text InputType, it's better to use number input. In this case done for example.
         month.addInputFilter(StringInputFilter(*monthsNumbers, *monthsValues))
         // Convert the value to and from the string
@@ -94,6 +90,7 @@ class MainActivity : AppCompatActivity() {
             setSeason(new)
             invalidateMaxDay()
         }
+        month.value = (date.get(Calendar.MONTH) + 1).toFloat()
     }
 
     private fun configureTime() {
