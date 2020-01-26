@@ -97,8 +97,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun configureTime() {
-        // Set current time
-        time.value = LocalTime().millis.toFloat()
         // Validate user input
         time.addInputFilter(TimeInputFilter(true))
         // Convert the value to and from the string
@@ -117,12 +115,18 @@ class MainActivity : AppCompatActivity() {
         })
         time.setOnStateChangeListener(object : SwipePicker.OnStateChangeListener {
             override fun onActivated(view: SwipePicker, isActivated: Boolean) {
-                time.setTintColor(Color.TRANSPARENT)
-                timeLabel.visibility = if (isActivated) VISIBLE else INVISIBLE
+                timeLabel.visibility = if (isActivated) {
+                    setTimeOfDay(time.value)
+                    VISIBLE
+                } else {
+                    time.setTintColor(Color.TRANSPARENT)
+                    INVISIBLE
+                }
             }
         })
-        setTimeOfDay(time.value) // call for init value
         time.setOnValueChangeListener { _, new -> setTimeOfDay(new) }
+        // Set current time
+        time.value = LocalTime().millis.toFloat()
     }
 
     private fun invalidateMaxDay() {
