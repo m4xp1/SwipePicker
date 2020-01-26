@@ -19,6 +19,7 @@ import android.view.*
 import android.view.MotionEvent.ACTION_CANCEL
 import android.view.MotionEvent.ACTION_UP
 import android.view.SoundEffectConstants.CLICK
+import android.view.View.MeasureSpec.*
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.WindowManager.LayoutParams.*
 import android.view.inputmethod.EditorInfo
@@ -245,9 +246,14 @@ class SwipePicker : LinearLayout {
     private fun calculateHintPosition(activated: Boolean): Float {
         if (activated) return 0f
 
-        val scaledHeight = hintTextView.height *
-                inputEditText.height / hintTextView.height.toFloat()
-        val scaledVerticalOffset = (hintTextView.height - scaledHeight) / 2
+        val heightMeasureSpec = makeMeasureSpec(0, UNSPECIFIED)
+
+        hintTextView.measure(makeMeasureSpec(hintTextView.width, EXACTLY), heightMeasureSpec)
+        inputEditText.measure(makeMeasureSpec(inputEditText.width, EXACTLY), heightMeasureSpec)
+
+        val scaledHeight = hintTextView.measuredHeight *
+                inputEditText.measuredHeight / hintTextView.measuredHeight.toFloat()
+        val scaledVerticalOffset = (hintTextView.measuredHeight - scaledHeight) / 2
 
         return scaledHeight + scaledVerticalOffset + inputEditText.top
     }
@@ -685,7 +691,9 @@ class SwipePicker : LinearLayout {
     }
 
     private fun invalidateHoverViewPosition() {
-        hoverView.measure(MeasureSpec.EXACTLY, MeasureSpec.EXACTLY)
+        val measureSpec = makeMeasureSpec(0, UNSPECIFIED)
+
+        hoverView.measure(measureSpec, measureSpec)
         inputAreaView.getLocationOnScreen(inputAreaPosition)
 
         hoverView.x = inputAreaPosition[0] +
