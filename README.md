@@ -17,7 +17,7 @@ To use **SwipePicker** in your projects, simply add the library as a dependency 
 ##### Gradle
 ```gradle
 dependencies {
-    implementation 'one.xcorp.widget:swipe-picker:1.1.0'
+    implementation 'one.xcorp.widget:swipe-picker:1.2.0'
 }
 ```
 
@@ -26,12 +26,12 @@ dependencies {
 <dependency> 
     <groupId>one.xcorp.widget</groupId> 
     <artifactId>swipe-picker</artifactId> 
-    <version>1.1.0</version> 
+    <version>1.2.0</version> 
     <type>pom</type> 
 </dependency>
 ```
 
-Alternatively you can directly import the [`/swipepicker`](https://github.com/m4xp1/SwipePicker/tree/master/swipepicker) module or [`swipe-picker-1.1.0.aar`](https://bintray.com/xcorp/android/download_file?file_path=one%2Fxcorp%2Fwidget%2Fswipe-picker%2F1.1.0%2Fswipe-picker-1.1.0.aar) file into your Android Studio project and add it as a dependency in your **build.gradle**.
+Alternatively you can directly import the [`/swipepicker`](https://github.com/m4xp1/SwipePicker/tree/master/swipepicker) module or [`swipe-picker-1.2.0.aar`](https://bintray.com/xcorp/android/download_file?file_path=one%2Fxcorp%2Fwidget%2Fswipe-picker%2F1.2.0%2Fswipe-picker-1.2.0.aar) file into your Android Studio project and add it as a dependency in your **build.gradle**.
 
 ## Usage
 **SwipePicker** can be added as a custom view to any layout. For more detailed code example to use the library, please refer to the [`/sample`](https://github.com/m4xp1/SwipePicker/tree/master/app) app.
@@ -146,7 +146,7 @@ swipepicker.setScaleHandler(object : SwipePicker.ScaleHandler {
 
 ## Demo
 
-[Download](https://github.com/m4xp1/SwipePicker/releases/download/v1.1.1/swipepicker-v1.1.1.apk)
+[Download](https://github.com/m4xp1/SwipePicker/releases/download/v1.2.0/swipepicker-v1.2.0.apk)
 
 ## Apps using the SwipePicker
 
